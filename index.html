@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="th" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>เที่ยวอุดรธานี - Udon Thani Travel Guide</title>
+    <link rel="icon" type="image/png" href="favicon.png"> 
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;700&display=swap" rel="stylesheet">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Sarabun', 'sans-serif'],
+                    },
+                    colors: {
+                        primary: '#0077b6',
+                        secondary: '#00b4d8',
+                        darkBg: '#121212',
+                        darkCard: '#1e1e1e',
+                    },
+                    animation: {
+                        'float': 'float 3s ease-in-out infinite',
+                        'fade-in-up': 'fadeInUp 0.8s ease-out forwards',
+                        'slide-up': 'slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards',
+                        'scale-in': 'scaleIn 0.3s ease-out forwards',
+                        'fade-in': 'fadeIn 0.3s ease-out forwards',
+                    },
+                    keyframes: {
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-10px)' },
+                        },
+                        fadeInUp: {
+                            '0%': { opacity: '0', transform: 'translateY(20px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' },
+                        },
+                        slideUp: {
+                            '0%': { opacity: '0', transform: 'translateY(40px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' },
+                        },
+                        scaleIn: {
+                            '0%': { opacity: '0', transform: 'scale(0.9)' },
+                            '100%': { opacity: '1', transform: 'scale(1)' },
+                        },
+                        fadeIn: {
+                            '0%': { opacity: '0' },
+                            '100%': { opacity: '1' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 10px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        .dark ::-webkit-scrollbar-track { background: #2d2d2d; }
+        ::-webkit-scrollbar-thumb { background: #0077b6; border-radius: 5px; }
+        ::-webkit-scrollbar-thumb:hover { background: #00b4d8; }
+        
+        .opacity-0-start { opacity: 0; }
+    </style>
+    
+    <meta name="description" content="คู่มือเที่ยวอุดรธานี รวบรวมที่เที่ยวธรรมชาติ วัด วัฒนธรรม และคาเฟ่สุดชิค พร้อมแผนที่นำทาง">
+    <meta property="og:title" content="เที่ยวอุดรธานี - มหัศจรรย์เมืองพญานาค">
+    <meta property="og:description" content="ค้นพบที่เที่ยว Unseen อุดรธานี ทะเลบัวแดง คำชะโนด และอีกมากมาย">
+    <meta property="og:image" content="https://images.unsplash.com/photo-1528181304800-259b08848526?auto=format&fit=crop&w=1200"> 
+    <meta property="og:url" content="https://your-username.github.io/udon-travel/">
+</head>
+<body class="bg-gray-50 text-gray-800 dark:bg-darkBg dark:text-gray-100 transition-colors duration-300">
+
+    <nav class="fixed top-0 w-full z-50 bg-white/90 dark:bg-darkCard/90 backdrop-blur-md shadow-sm transition-all duration-300" id="navbar">
+        <div class="container mx-auto px-6 py-4 flex justify-between items-center relative">
+            <a href="#" class="text-2xl font-bold text-primary hover:scale-105 transition-transform">UDON<span class="text-secondary">TRAVEL</span></a>
+            
+            <ul class="hidden md:flex gap-8 items-center font-medium">
+                <li><a href="#home" class="hover:text-primary transition relative after:content-[''] after:absolute after:-bottom-1 after:left-0 after:w-0 after:h-0.5 after:bg-primary after:transition-all hover:after:w-full">หน้าแรก</a></li>
+                <li><a href="#attractions" class="hover:text-primary transition relative after:content-[''] after:absolute after:-bottom-1 after:left-0 after:w-0 after:h-0.5 after:bg-primary after:transition-all hover:after:w-full">ที่เที่ยว</a></li>
+                <li><a href="#map" class="hover:text-primary transition relative after:content-[''] after:absolute after:-bottom-1 after:left-0 after:w-0 after:h-0.5 after:bg-primary after:transition-all hover:after:w-full">แผนที่</a></li>
+                <li>
+                    <button id="theme-toggle" class="border border-gray-300 dark:border-gray-600 px-4 py-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition active:scale-95">
+                        🌙 Dark
+                    </button>
+                </li>
+            </ul>
+
+            <button id="menu-btn" class="md:hidden text-primary focus:outline-none p-2 active:scale-90 transition-transform bg-gray-100 dark:bg-gray-800 rounded-lg">
+                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+            </button>
+        </div>
+
+        <div id="mobile-menu" class="hidden md:hidden absolute top-20 right-4 w-64 bg-white dark:bg-[#2d2d2d] rounded-2xl shadow-2xl border border-gray-100 dark:border-gray-700 flex flex-col p-2 origin-top-right transition-all animate-scale-in z-50">
+            <a href="#home" class="flex items-center gap-3 px-4 py-3 rounded-xl text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-colors" onclick="toggleMobileMenu()">
+                <span>🏠</span> หน้าแรก
+            </a>
+            <a href="#attractions" class="flex items-center gap-3 px-4 py-3 rounded-xl text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-colors" onclick="toggleMobileMenu()">
+                <span>🗺️</span> ที่เที่ยว
+            </a>
+            <a href="#map" class="flex items-center gap-3 px-4 py-3 rounded-xl text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-colors" onclick="toggleMobileMenu()">
+                <span>📍</span> แผนที่
+            </a>
+            <div class="h-px bg-gray-200 dark:bg-gray-600 my-1 mx-2"></div>
+            <button id="theme-toggle-mobile" class="flex items-center gap-3 w-full text-left px-4 py-3 rounded-xl text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-colors">
+                <span>🌙</span> ปรับโหมดสี
+            </button>
+        </div>
+    </nav>
+
+    <header id="home" class="h-screen relative flex items-center justify-center text-center text-white bg-cover bg-center overflow-hidden group" 
+    style="background-image: url('https://images.unsplash.com/photo-1528181304800-259b08848526?auto=format&fit=crop&w=1600'); background-attachment: fixed;">
+        <div class="absolute inset-0 bg-black/40 transition duration-500 group-hover:bg-black/30"></div>
+        
+        <div class="relative z-10 px-4 transition-all duration-100 ease-out" id="hero-text">
+            <h1 class="text-5xl md:text-8xl font-bold mb-4 drop-shadow-2xl tracking-tight">
+                มหัศจรรย์<span class="text-secondary">อุดรธานี</span>
+            </h1>
+            <p class="text-lg md:text-2xl mb-8 drop-shadow-md font-light">สัมผัสอารยธรรมมรดกโลก ธรรมชาติงามตา และตำนานพญานาค</p>
+            <div>
+                <a href="#attractions" class="bg-primary hover:bg-secondary text-white px-8 py-4 rounded-full text-lg font-semibold shadow-[0_0_20px_rgba(0,119,182,0.6)] transition-all transform hover:-translate-y-1 hover:scale-105 active:scale-95 inline-block">
+                    เริ่มออกเดินทาง
+                </a>
+            </div>
+        </div>
+        
+        <div class="absolute bottom-10 left-1/2 transform -translate-x-1/2 animate-bounce cursor-pointer" onclick="document.getElementById('attractions').scrollIntoView({behavior: 'smooth'})">
+            <svg class="w-10 h-10 text-white/80 hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path>
+            </svg>
+        </div>
+    </header>
+
+    <section id="attractions" class="py-24 container mx-auto px-6">
+        <h2 class="text-4xl font-bold text-center text-primary mb-12 opacity-0-start transition-all duration-700" id="attractions-title">สถานที่ท่องเที่ยวยอดนิยม</h2>
+        
+        <div class="flex flex-wrap justify-center gap-4 mb-12 opacity-0-start transition-all duration-700 delay-200 relative z-30" id="search-container">
+            <input type="text" id="searchInput" placeholder="🔍 ค้นหาสถานที่..." class="w-full max-w-sm p-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary dark:bg-darkCard dark:border-gray-600 shadow-sm transition-all hover:shadow-md">
+            
+            <div class="relative w-full max-w-[200px]" id="customDropdown">
+                <button id="dropdownBtn" class="w-full p-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-darkCard shadow-sm text-left flex justify-between items-center transition-all duration-300 hover:shadow-md hover:border-primary focus:ring-2 focus:ring-primary">
+                    <span id="selectedText">ทั้งหมด</span>
+                    <span class="transform transition-transform duration-300" id="dropdownArrow">▼</span>
+                </button>
+                <ul id="dropdownList" class="absolute z-50 w-full mt-2 bg-white dark:bg-darkCard border border-gray-200 dark:border-gray-700 rounded-xl shadow-xl overflow-hidden opacity-0 invisible transform scale-95 origin-top transition-all duration-300 ease-out">
+                    <li data-value="all" class="p-3 cursor-pointer hover:bg-primary/10 hover:text-primary transition-colors border-b border-gray-100 dark:border-gray-700 last:border-0 translate-y-2 opacity-0 transition-all duration-300 delay-[0ms]">ทั้งหมด</li>
+                    <li data-value="nature" class="p-3 cursor-pointer hover:bg-primary/10 hover:text-primary transition-colors border-b border-gray-100 dark:border-gray-700 last:border-0 translate-y-2 opacity-0 transition-all duration-300 delay-[50ms]">🌳 ธรรมชาติ</li>
+                    <li data-value="temple" class="p-3 cursor-pointer hover:bg-primary/10 hover:text-primary transition-colors border-b border-gray-100 dark:border-gray-700 last:border-0 translate-y-2 opacity-0 transition-all duration-300 delay-[100ms]">🙏 วัด/ศาสนา</li>
+                    <li data-value="culture" class="p-3 cursor-pointer hover:bg-primary/10 hover:text-primary transition-colors border-b border-gray-100 dark:border-gray-700 last:border-0 translate-y-2 opacity-0 transition-all duration-300 delay-[150ms]">🏺 วัฒนธรรม</li>
+                    <li data-value="city" class="p-3 cursor-pointer hover:bg-primary/10 hover:text-primary transition-colors border-b border-gray-100 dark:border-gray-700 last:border-0 translate-y-2 opacity-0 transition-all duration-300 delay-[200ms]">🏙️ ในเมือง</li>
+                </ul>
+            </div>
+            
+            <button onclick="randomTravel()" class="p-3 px-6 rounded-xl bg-gradient-to-r from-pink-500 to-rose-500 text-white font-bold shadow-lg hover:shadow-pink-500/30 hover:-translate-y-1 transition-all active:scale-95 flex items-center gap-2">
+                🎲 สุ่มที่เที่ยว
+            </button>
+            
+            <input type="hidden" id="filterCategory" value="all">
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8" id="cardGrid"></div>
+        <p id="noResult" class="hidden text-center text-gray-500 mt-10 text-xl animate-fade-in">ไม่พบข้อมูล 😢</p>
+    </section>
+
+    <section id="map" class="py-24 bg-gray-100 dark:bg-darkCard/50 relative">
+        <div class="container mx-auto px-6 relative z-10">
+            <h2 class="text-4xl font-bold text-center text-primary mb-12 opacity-0-start transition-all duration-700" id="map-title">แผนที่และการเดินทาง</h2>
+            <div class="rounded-3xl overflow-hidden shadow-2xl w-full h-[500px] opacity-0-start transition-all duration-700 delay-200 transform translate-y-10" id="map-container">
+                <iframe id="googleMap" 
+                        src="https://maps.google.com/maps?q=Udon+Thani&t=&z=13&ie=UTF8&iwloc=&output=embed" 
+                        class="w-full h-full border-0 grayscale-[30%] hover:grayscale-0 transition-all duration-500" 
+                        allowfullscreen="" 
+                        loading="lazy">
+                </iframe>
+            </div>
+        </div>
+         <div class="absolute top-0 left-0 w-full h-20 bg-gradient-to-b from-white dark:from-darkBg to-transparent"></div>
+    </section>
+
+    <footer class="bg-white dark:bg-darkCard pt-16 pb-8 border-t border-gray-200 dark:border-gray-700">
+        <div class="container mx-auto px-6">
+            <div class="flex flex-col md:flex-row justify-between items-center mb-8">
+                <div class="text-center md:text-left mb-6 md:mb-0">
+                    <a href="#" class="text-2xl font-bold text-primary">UDON<span class="text-secondary">TRAVEL</span></a>
+                    <p class="text-gray-500 mt-2 text-sm">คู่มือท่องเที่ยวออนไลน์ที่ดีที่สุดในอุดรธานี</p>
+                </div>
+                
+                <div class="flex gap-4">
+                    <a href="https://www.facebook.com/sharer/sharer.php?u=https://your-website.com" target="_blank" class="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center text-gray-600 dark:text-gray-300 hover:bg-[#1877F2] hover:text-white transition-all transform hover:scale-110">
+                        <i class="fab fa-facebook-f text-lg"></i>
+                    </a>
+                    
+                    <a href="https://www.instagram.com/" target="_blank" class="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center text-gray-600 dark:text-gray-300 hover:bg-gradient-to-tr hover:from-[#f9ce34] hover:via-[#ee2a7b] hover:to-[#6228d7] hover:text-white transition-all transform hover:scale-110">
+                        <i class="fab fa-instagram text-lg"></i>
+                    </a>
+                    
+                    <a href="https://twitter.com/intent/tweet?url=https://your-website.com&text=มาเที่ยวอุดรกันเถอะ!" target="_blank" class="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center text-gray-600 dark:text-gray-300 hover:bg-black hover:text-white transition-all transform hover:scale-110">
+                        <i class="fa-brands fa-x-twitter text-lg"></i>
+                    </a>
+                </div>
+            </div>
+            <div class="border-t border-gray-100 dark:border-gray-800 pt-8 text-center">
+                <p class="text-gray-500 text-sm">© 2025 Udon Thani Travel Guide. Developed with 💙 by You.</p>
+            </div>
+        </div>
+    </footer>
+
+    <div id="detailModal" class="fixed inset-0 z-[2000] hidden flex items-center justify-center px-4">
+        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity opacity-0 animate-fade-in" onclick="closeModalFunc()"></div>
+        <div class="relative bg-white dark:bg-darkCard w-full max-w-4xl rounded-3xl shadow-2xl overflow-hidden max-h-[90vh] flex flex-col opacity-0 animate-scale-in transform transition-all">
+            <button class="close-modal absolute top-4 right-4 bg-white/80 dark:bg-darkCard/80 text-3xl text-gray-600 dark:text-gray-300 hover:text-red-500 z-50 w-10 h-10 rounded-full flex items-center justify-center focus:outline-none active:scale-90 transition-all">×</button>
+            <div id="modalBody" class="overflow-y-auto p-0 no-scrollbar"></div>
+        </div>
+    </div>
+
+    <button id="backToTop" class="fixed bottom-8 right-8 bg-primary/90 hover:bg-secondary text-white p-4 rounded-full shadow-lg hidden transition-all transform hover:scale-110 active:scale-90 z-40 backdrop-blur-sm">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18" />
+        </svg>
+    </button>
+
+    <script src="data.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
