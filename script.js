@@ -9,7 +9,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const navbar = document.getElementById('navbar');
     const closeModalBtn = document.querySelector('.close-modal');
 
-    // --- Mobile Menu & Theme Toggle ---
+    // --- 1. Mobile Menu & Theme Toggle ---
     const menuBtn = document.getElementById('menu-btn');
     const mobileMenu = document.getElementById('mobile-menu');
     const themeToggle = document.getElementById('theme-toggle');        
@@ -48,11 +48,13 @@ document.addEventListener('DOMContentLoaded', () => {
     if(themeToggleMobile) themeToggleMobile.addEventListener('click', toggleTheme);
 
 
-    // --- Slideshow & Cards ---
+    // --- 2. Slideshow Variables ---
     let currentImageIndex = 0;
     let currentItemImages = [];
     let slideshowInterval;
 
+
+    // --- 3. Render Cards (Updated: No inline onclick) ---
     function renderCards(data) {
         cardGrid.innerHTML = '';
         if (data.length === 0) {
@@ -64,12 +66,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
         data.forEach((item, index) => {
             const card = document.createElement('div');
+            // ใช้ data-id แทน onclick เพื่อทำ Event Delegation
+            card.setAttribute('data-id', item.id);
             card.className = 'bg-white dark:bg-darkCard rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl hover:-translate-y-2 transition-all duration-500 cursor-pointer group opacity-0';
-            card.setAttribute('onclick', `openModal(${item.id})`);
 
             const coverImage = item.images && item.images.length > 0 ? item.images[0] : 'https://placehold.co/600x400';
             const fallbackLink = `https://placehold.co/600x400?text=${encodeURIComponent(item.name)}`;
 
+            // ลบ onclick="..." ออกจาก HTML String
             card.innerHTML = `
                 <div class="h-64 overflow-hidden relative">
                     <img src="${coverImage}" alt="${item.name}" loading="lazy" 
@@ -96,6 +100,16 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // --- 4. Event Delegation (Best Practice) ---
+    // ดักจับการคลิกที่ Grid แล้วดูว่าคลิกโดนการ์ดใบไหน
+    cardGrid.addEventListener('click', (e) => {
+        const card = e.target.closest('[data-id]');
+        if (card) {
+            const id = parseInt(card.getAttribute('data-id'));
+            openModal(id);
+        }
+    });
+
     function getCategoryName(cat) {
         const names = { 'nature': 'ธรรมชาติ', 'temple': 'วัด/ศาสนา', 'culture': 'วัฒนธรรม', 'city': 'ในเมือง' };
         return names[cat] || cat;
@@ -114,20 +128,15 @@ document.addEventListener('DOMContentLoaded', () => {
     searchInput.addEventListener('input', handleFilter);
     filterCategory.addEventListener('change', handleFilter);
 
-    // --- Scroll Fade Effect (เลื่อนลงแล้วตัวหนังสือค่อยๆ หายไป) ---
+
+    // --- 5. Scroll Fade Effect ---
     window.addEventListener('scroll', () => {
         const heroText = document.getElementById('hero-text');
         if (!heroText) return;
-
         const scrollPosition = window.scrollY;
-        
-        // คำนวณความจาง (Opacity): ยิ่งเลื่อนลง ยิ่งจาง
         let opacity = 1 - (scrollPosition / 500);
-        // คำนวณตำแหน่ง (TranslateY): ให้ตัวหนังสือเลื่อนลงช้าๆ แบบ Parallax
         let translateY = scrollPosition * 0.5;
-
         if (opacity < 0) opacity = 0; 
-
         heroText.style.opacity = opacity;
         heroText.style.transform = `translateY(${translateY}px)`;
     });
@@ -152,34 +161,45 @@ document.addEventListener('DOMContentLoaded', () => {
     if(mapContEl) sectionObserver.observe(mapContEl);
 
 
-    window.openModal = (id) => {
+    // --- 6. Modal Logic (Updated & Fixed) ---
+    const openModal = (id) => {
         const item = attractions.find(a => a.id === id);
         if (!item) return;
 
         currentImageIndex = 0;
-        currentItemImages = item.images && item.images.length > 0 ? item.images : [item.image];
+        currentItemImages = item.images && item.images.length > 0 ? item.images : ['https://placehold.co/600x400?text=No+Image'];
         stopSlideshow();
 
         let thumbsHTML = '';
         if(currentItemImages.length > 1) {
             thumbsHTML = `<div class="flex gap-2 overflow-x-auto pb-2 mt-4 px-6 no-scrollbar" id="thumbContainer">`;
             currentItemImages.forEach((img, index) => {
-                thumbsHTML += `<img src="${img}" class="w-20 h-14 object-cover rounded-lg cursor-pointer opacity-50 hover:opacity-100 border-2 border-transparent hover:border-primary transition-all thumb-img active:scale-95" data-index="${index}" onclick="changeSlide(${index})">`;
+                thumbsHTML += `<img src="${img}" 
+                                onerror="this.src='https://placehold.co/100x100?text=No+Image'"
+                                class="w-20 h-14 object-cover rounded-lg cursor-pointer opacity-50 hover:opacity-100 border-2 border-transparent hover:border-primary transition-all thumb-img active:scale-95" 
+                                data-index="${index}" onclick="changeSlide(${index})">`;
             });
             thumbsHTML += `</div>`;
         }
 
-        const mapEmbedUrl = `https://maps.google.com/maps?q=${encodeURIComponent(item.name + ' อุดรธานี')}&t=&z=15&ie=UTF8&iwloc=&output=embed`;
-        const mapOpenUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(item.name + ' อุดรธานี')}`;
+        // --- Fixed Map URLs ---
+        const query = encodeURIComponent(item.name + ' อุดรธานี');
+        // ใช้ Google Maps Embed URL Format ที่ถูกต้องสำหรับ iframe (แบบไม่มี key อาจมีข้อจำกัด แต่ดีกว่าอันเดิม)
+        const mapEmbedUrl = `https://maps.google.com/maps?q=${query}&t=&z=15&ie=UTF8&iwloc=&output=embed`;
+        // ลิงก์สำหรับเปิดแอป/เว็บ
+        const mapOpenUrl = `https://www.google.com/maps/search/?api=1&query=${query}`;
         
         const mainImg = currentItemImages[0];
 
-        // ✅ อัปเดต Modal Body ให้โชว์ข้อมูลใหม่ (Price, Highlight)
         modalBody.innerHTML = `
             <div class="relative w-full h-[300px] md:h-[450px] bg-black group">
                 <button class="absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 flex items-center justify-center bg-white/20 hover:bg-white/40 text-white rounded-full backdrop-blur-md z-10 transition-all opacity-100 md:opacity-0 md:group-hover:opacity-100 active:scale-90" onclick="moveSlide(-1)">❮</button>
                 <button class="absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 flex items-center justify-center bg-white/20 hover:bg-white/40 text-white rounded-full backdrop-blur-md z-10 transition-all opacity-100 md:opacity-0 md:group-hover:opacity-100 active:scale-90" onclick="moveSlide(1)">❯</button>
-                <img id="modalMainImage" src="${mainImg}" class="w-full h-full object-contain transition-opacity duration-300 animate-fade-in">
+                
+                <img id="modalMainImage" src="${mainImg}" 
+                     class="w-full h-full object-contain transition-opacity duration-300 animate-fade-in"
+                     onerror="this.src='https://placehold.co/600x400?text=${encodeURIComponent(item.name)}'">
+                
                 <div class="absolute bottom-0 left-0 w-full p-6 bg-gradient-to-t from-black/90 to-transparent text-white">
                      <h2 class="text-3xl font-bold mb-2">${item.name}</h2>
                      <div class="flex flex-wrap gap-4 text-sm opacity-95 font-medium">
@@ -209,7 +229,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 <div class="flex gap-4">
                      <a href="${mapOpenUrl}" target="_blank" class="flex-1 text-center bg-gradient-to-r from-[#34a853] to-[#2c8f46] hover:from-[#2c8f46] hover:to-[#1e6b32] text-white py-4 rounded-xl font-bold transition-all shadow-md hover:shadow-xl active:scale-95 flex items-center justify-center gap-2">
-                        🗺️ นำทาง
+                        🗺️ เปิด Google Maps
                     </a>
                     <button onclick="sharePlace('${item.name}', '${item.description}')" class="flex-1 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white py-4 rounded-xl font-bold transition-all shadow-md hover:shadow-xl active:scale-95 flex items-center justify-center gap-2">
                         📤 แชร์
@@ -223,12 +243,7 @@ document.addEventListener('DOMContentLoaded', () => {
         updateGalleryDisplay();
         startSlideshow();
 
-        const mainContainer = document.getElementById('imageView');
-        if(mainContainer) {
-            mainContainer.addEventListener('mouseenter', stopSlideshow);
-            mainContainer.addEventListener('mouseleave', startSlideshow);
-        }
-
+        // Update Big Map below
         const bigMap = document.getElementById('googleMap');
         if(bigMap) {
             bigMap.src = mapEmbedUrl;
@@ -256,6 +271,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
+    // Helper functions for Slideshow (called from HTML string in modal)
     window.moveSlide = (n) => {
         currentImageIndex += n;
         if (currentImageIndex >= currentItemImages.length) currentImageIndex = 0;
@@ -280,17 +296,14 @@ document.addEventListener('DOMContentLoaded', () => {
         document.body.style.overflow = 'auto';
         stopSlideshow();
     };
-    
     closeModalBtn.onclick = closeModalFunc;
 
     window.addEventListener('scroll', () => {
         if (window.scrollY > 50) navbar.classList.add('shadow-sm', 'bg-white/90', 'dark:bg-darkCard/90', 'backdrop-blur-md');
         else navbar.classList.remove('shadow-sm', 'bg-white/90', 'dark:bg-darkCard/90', 'backdrop-blur-md');
-        
         if (window.scrollY > 300) backToTop.classList.remove('hidden');
         else backToTop.classList.add('hidden');
     });
-    
     backToTop.onclick = () => window.scrollTo({ top: 0, behavior: 'smooth' });
 
     // Custom Dropdown Logic
@@ -339,7 +352,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     window.addEventListener('click', () => { closeDropdown(); });
     
-    // Web Share API
     window.sharePlace = (name, desc) => {
         if (navigator.share) {
             navigator.share({
@@ -352,7 +364,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    // Random Travel (ฟีเจอร์สุ่มที่เที่ยว)
+    // Random Travel Logic (Updated)
     window.randomTravel = () => {
         const randomIndex = Math.floor(Math.random() * attractions.length);
         const randomItem = attractions[randomIndex];
