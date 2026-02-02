@@ -9,6 +9,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const navbar = document.getElementById('navbar');
     const closeModalBtn = document.querySelector('.close-modal');
 
+    // Utility: Debounce เพื่อชะลอการทำงานของ Search/Filter
+    function debounce(func, wait) {
+        let timeout;
+        return function(...args) {
+            clearTimeout(timeout);
+            timeout = setTimeout(() => func.apply(this, args), wait);
+        };
+    }
+
     // --- 1. Mobile Menu & Theme Toggle ---
     const menuBtn = document.getElementById('menu-btn');
     const mobileMenu = document.getElementById('mobile-menu');
@@ -52,10 +61,14 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentImageIndex = 0;
     let currentItemImages = [];
     let slideshowInterval;
+    let animationTimeouts = []; // เก็บ Timeout ID เพื่อเคลียร์เมื่อค้นหาใหม่
 
-
-    // --- 3. Render Cards (Updated: No inline onclick) ---
+    // --- 3. Render Cards ---
     function renderCards(data) {
+        // เคลียร์ Animation เก่าที่รันค้างอยู่
+        animationTimeouts.forEach(clearTimeout);
+        animationTimeouts = [];
+
         cardGrid.innerHTML = '';
         if (data.length === 0) {
             noResult.style.display = 'block';
@@ -66,14 +79,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
         data.forEach((item, index) => {
             const card = document.createElement('div');
-            // ใช้ data-id แทน onclick เพื่อทำ Event Delegation
             card.setAttribute('data-id', item.id);
+            // เพิ่ม class opacity-0 รอ animation
             card.className = 'bg-white dark:bg-darkCard rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl hover:-translate-y-2 transition-all duration-500 cursor-pointer group opacity-0';
 
             const coverImage = item.images && item.images.length > 0 ? item.images[0] : 'https://placehold.co/600x400';
             const fallbackLink = `https://placehold.co/600x400?text=${encodeURIComponent(item.name)}`;
 
-            // ลบ onclick="..." ออกจาก HTML String
             card.innerHTML = `
                 <div class="h-64 overflow-hidden relative">
                     <img src="${coverImage}" alt="${item.name}" loading="lazy" 
@@ -93,15 +105,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
             `;
             cardGrid.appendChild(card);
-            setTimeout(() => {
+            
+            // Stagger Animation
+            const timeoutId = setTimeout(() => {
                 card.classList.remove('opacity-0');
                 card.classList.add('animate-slide-up');
-            }, index * 150);
+            }, index * 100); // เร็วขึ้นเล็กน้อย
+            animationTimeouts.push(timeoutId);
         });
     }
 
-    // --- 4. Event Delegation (Best Practice) ---
-    // ดักจับการคลิกที่ Grid แล้วดูว่าคลิกโดนการ์ดใบไหน
+    // --- 4. Event Delegation ---
     cardGrid.addEventListener('click', (e) => {
         const card = e.target.closest('[data-id]');
         if (card) {
@@ -125,22 +139,48 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         renderCards(filtered);
     }
-    searchInput.addEventListener('input', handleFilter);
+    
+    // ใช้ Debounce 300ms เพื่อลดการประมวลผลขณะพิมพ์
+    searchInput.addEventListener('input', debounce(handleFilter, 300));
     filterCategory.addEventListener('change', handleFilter);
 
 
-    // --- 5. Scroll Fade Effect ---
+    // --- 5. Scroll Fade Effect (Optimized with requestAnimationFrame) ---
+    let isScrolling = false;
+    const heroText = document.getElementById('hero-text');
+
     window.addEventListener('scroll', () => {
-        const heroText = document.getElementById('hero-text');
-        if (!heroText) return;
-        const scrollPosition = window.scrollY;
-        let opacity = 1 - (scrollPosition / 500);
-        let translateY = scrollPosition * 0.5;
-        if (opacity < 0) opacity = 0; 
-        heroText.style.opacity = opacity;
-        heroText.style.transform = `translateY(${translateY}px)`;
+        if (!isScrolling) {
+            window.requestAnimationFrame(() => {
+                handleScrollEffects();
+                isScrolling = false;
+            });
+            isScrolling = true;
+        }
     });
 
+    function handleScrollEffects() {
+        const scrollPosition = window.scrollY;
+        
+        // Hero Text Parallax
+        if (heroText) {
+            let opacity = 1 - (scrollPosition / 500);
+            let translateY = scrollPosition * 0.5;
+            if (opacity < 0) opacity = 0; 
+            heroText.style.opacity = opacity;
+            heroText.style.transform = `translateY(${translateY}px)`;
+        }
+
+        // Navbar Change
+        if (scrollPosition > 50) navbar.classList.add('shadow-sm', 'bg-white/90', 'dark:bg-darkCard/90', 'backdrop-blur-md');
+        else navbar.classList.remove('shadow-sm', 'bg-white/90', 'dark:bg-darkCard/90', 'backdrop-blur-md');
+        
+        // Back to Top Button
+        if (scrollPosition > 300) backToTop.classList.remove('hidden');
+        else backToTop.classList.add('hidden');
+    }
+
+    // Intersection Observer (Efficient Scroll Animations)
     const sectionObserver = new IntersectionObserver((entries) => {
         entries.forEach(entry => {
             if (entry.isIntersecting) {
@@ -149,19 +189,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 sectionObserver.unobserve(entry.target);
             }
         });
-    }, { threshold: 0.2 });
+    }, { threshold: 0.1 });
 
-    const titleEl = document.getElementById('attractions-title');
-    if(titleEl) sectionObserver.observe(titleEl);
-    const searchEl = document.getElementById('search-container');
-    if(searchEl) sectionObserver.observe(searchEl);
-    const mapTitleEl = document.getElementById('map-title');
-    if(mapTitleEl) sectionObserver.observe(mapTitleEl);
-    const mapContEl = document.getElementById('map-container');
-    if(mapContEl) sectionObserver.observe(mapContEl);
+    const observerTargets = ['attractions-title', 'search-container', 'map-title', 'map-container'];
+    observerTargets.forEach(id => {
+        const el = document.getElementById(id);
+        if(el) sectionObserver.observe(el);
+    });
 
 
-    // --- 6. Modal Logic (Updated & Fixed) ---
+    // --- 6. Modal Logic ---
     const openModal = (id) => {
         const item = attractions.find(a => a.id === id);
         if (!item) return;
@@ -182,11 +219,10 @@ document.addEventListener('DOMContentLoaded', () => {
             thumbsHTML += `</div>`;
         }
 
-        // --- Fixed Map URLs ---
         const query = encodeURIComponent(item.name + ' อุดรธานี');
-        // ใช้ Google Maps Embed URL Format ที่ถูกต้องสำหรับ iframe (แบบไม่มี key อาจมีข้อจำกัด แต่ดีกว่าอันเดิม)
+        // ใช้ Legacy Embed (อาจติด Watermark หากไม่มี API Key) แต่ดีกว่าลิงก์เสีย
         const mapEmbedUrl = `https://maps.google.com/maps?q=${query}&t=&z=15&ie=UTF8&iwloc=&output=embed`;
-        // ลิงก์สำหรับเปิดแอป/เว็บ
+        // ลิงก์เปิดแอป Google Maps ที่ถูกต้อง
         const mapOpenUrl = `https://www.google.com/maps/search/?api=1&query=${query}`;
         
         const mainImg = currentItemImages[0];
@@ -231,9 +267,6 @@ document.addEventListener('DOMContentLoaded', () => {
                      <a href="${mapOpenUrl}" target="_blank" class="flex-1 text-center bg-gradient-to-r from-[#34a853] to-[#2c8f46] hover:from-[#2c8f46] hover:to-[#1e6b32] text-white py-4 rounded-xl font-bold transition-all shadow-md hover:shadow-xl active:scale-95 flex items-center justify-center gap-2">
                         🗺️ เปิด Google Maps
                     </a>
-                    <button onclick="sharePlace('${item.name}', '${item.description}')" class="flex-1 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white py-4 rounded-xl font-bold transition-all shadow-md hover:shadow-xl active:scale-95 flex items-center justify-center gap-2">
-                        📤 แชร์
-                    </button>
                 </div>
             </div>
         `;
@@ -271,7 +304,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    // Helper functions for Slideshow (called from HTML string in modal)
     window.moveSlide = (n) => {
         currentImageIndex += n;
         if (currentImageIndex >= currentItemImages.length) currentImageIndex = 0;
@@ -298,12 +330,6 @@ document.addEventListener('DOMContentLoaded', () => {
     };
     closeModalBtn.onclick = closeModalFunc;
 
-    window.addEventListener('scroll', () => {
-        if (window.scrollY > 50) navbar.classList.add('shadow-sm', 'bg-white/90', 'dark:bg-darkCard/90', 'backdrop-blur-md');
-        else navbar.classList.remove('shadow-sm', 'bg-white/90', 'dark:bg-darkCard/90', 'backdrop-blur-md');
-        if (window.scrollY > 300) backToTop.classList.remove('hidden');
-        else backToTop.classList.add('hidden');
-    });
     backToTop.onclick = () => window.scrollTo({ top: 0, behavior: 'smooth' });
 
     // Custom Dropdown Logic
@@ -364,12 +390,12 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    // Random Travel Logic (Updated)
+    // Random Travel Logic
     window.randomTravel = () => {
         const randomIndex = Math.floor(Math.random() * attractions.length);
         const randomItem = attractions[randomIndex];
         openModal(randomItem.id);
     };
-
+    
     renderCards(attractions);
 });
