@@ -134,11 +134,14 @@ style="background-image: url('https://images.unsplash.com/photo-1528181304800-25
             </div>
         </div>
         
-        <div class="absolute bottom-10 left-1/2 transform -translate-x-1/2 animate-bounce cursor-pointer" onclick="document.getElementById('attractions').scrollIntoView({behavior: 'smooth'})">
-            <svg class="w-10 h-10 text-white/80 hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path>
-            </svg>
+                <div class="absolute bottom-10 inset-x-0 flex justify-center pointer-events-none z-20">
+            <div class="animate-bounce cursor-pointer pointer-events-auto p-2" onclick="document.getElementById('attractions').scrollIntoView({behavior: 'smooth'})">
+                <svg class="w-10 h-10 text-white/90 hover:text-white drop-shadow-md transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path>
+                </svg>
+            </div>
         </div>
+
     </header>
 
     <section id="attractions" class="py-24 container mx-auto px-6">
@@ -234,4 +237,5 @@ style="background-image: url('https://images.unsplash.com/photo-1528181304800-25
 </body>
 
 </html>
+
 
