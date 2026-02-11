@@ -9,7 +9,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const navbar = document.getElementById('navbar');
     const closeModalBtn = document.querySelector('.close-modal');
 
-    // Utility: Debounce เพื่อชะลอการทำงานของ Search/Filter
     function debounce(func, wait) {
         let timeout;
         return function(...args) {
@@ -18,7 +17,6 @@ document.addEventListener('DOMContentLoaded', () => {
         };
     }
 
-    // --- 1. Mobile Menu & Theme Toggle ---
     const menuBtn = document.getElementById('menu-btn');
     const mobileMenu = document.getElementById('mobile-menu');
     const themeToggle = document.getElementById('theme-toggle');        
@@ -56,16 +54,12 @@ document.addEventListener('DOMContentLoaded', () => {
     if(themeToggle) themeToggle.addEventListener('click', toggleTheme);
     if(themeToggleMobile) themeToggleMobile.addEventListener('click', toggleTheme);
 
-
-    // --- 2. Slideshow Variables ---
     let currentImageIndex = 0;
     let currentItemImages = [];
     let slideshowInterval;
-    let animationTimeouts = []; // เก็บ Timeout ID เพื่อเคลียร์เมื่อค้นหาใหม่
+    let animationTimeouts = [];
 
-    // --- 3. Render Cards ---
     function renderCards(data) {
-        // เคลียร์ Animation เก่าที่รันค้างอยู่
         animationTimeouts.forEach(clearTimeout);
         animationTimeouts = [];
 
@@ -80,7 +74,6 @@ document.addEventListener('DOMContentLoaded', () => {
         data.forEach((item, index) => {
             const card = document.createElement('div');
             card.setAttribute('data-id', item.id);
-            // เพิ่ม class opacity-0 รอ animation
             card.className = 'bg-white dark:bg-darkCard rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl hover:-translate-y-2 transition-all duration-500 cursor-pointer group opacity-0';
 
             const coverImage = item.images && item.images.length > 0 ? item.images[0] : 'https://placehold.co/600x400';
@@ -106,16 +99,14 @@ document.addEventListener('DOMContentLoaded', () => {
             `;
             cardGrid.appendChild(card);
             
-            // Stagger Animation
             const timeoutId = setTimeout(() => {
                 card.classList.remove('opacity-0');
                 card.classList.add('animate-slide-up');
-            }, index * 100); // เร็วขึ้นเล็กน้อย
+            }, index * 100);
             animationTimeouts.push(timeoutId);
         });
     }
 
-    // --- 4. Event Delegation ---
     cardGrid.addEventListener('click', (e) => {
         const card = e.target.closest('[data-id]');
         if (card) {
@@ -140,12 +131,9 @@ document.addEventListener('DOMContentLoaded', () => {
         renderCards(filtered);
     }
     
-    // ใช้ Debounce 300ms เพื่อลดการประมวลผลขณะพิมพ์
     searchInput.addEventListener('input', debounce(handleFilter, 300));
     filterCategory.addEventListener('change', handleFilter);
 
-
-    // --- 5. Scroll Fade Effect (Optimized with requestAnimationFrame) ---
     let isScrolling = false;
     const heroText = document.getElementById('hero-text');
 
@@ -162,7 +150,6 @@ document.addEventListener('DOMContentLoaded', () => {
     function handleScrollEffects() {
         const scrollPosition = window.scrollY;
         
-        // Hero Text Parallax
         if (heroText) {
             let opacity = 1 - (scrollPosition / 500);
             let translateY = scrollPosition * 0.5;
@@ -171,16 +158,13 @@ document.addEventListener('DOMContentLoaded', () => {
             heroText.style.transform = `translateY(${translateY}px)`;
         }
 
-        // Navbar Change
         if (scrollPosition > 50) navbar.classList.add('shadow-sm', 'bg-white/90', 'dark:bg-darkCard/90', 'backdrop-blur-md');
         else navbar.classList.remove('shadow-sm', 'bg-white/90', 'dark:bg-darkCard/90', 'backdrop-blur-md');
         
-        // Back to Top Button
         if (scrollPosition > 300) backToTop.classList.remove('hidden');
         else backToTop.classList.add('hidden');
     }
 
-    // Intersection Observer (Efficient Scroll Animations)
     const sectionObserver = new IntersectionObserver((entries) => {
         entries.forEach(entry => {
             if (entry.isIntersecting) {
@@ -197,8 +181,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if(el) sectionObserver.observe(el);
     });
 
-
-    // --- 6. Modal Logic ---
     const openModal = (id) => {
         const item = attractions.find(a => a.id === id);
         if (!item) return;
@@ -220,9 +202,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         const query = encodeURIComponent(item.name + ' อุดรธานี');
-        // ใช้ Legacy Embed (อาจติด Watermark หากไม่มี API Key) แต่ดีกว่าลิงก์เสีย
         const mapEmbedUrl = `https://maps.google.com/maps?q=${query}&t=&z=15&ie=UTF8&iwloc=&output=embed`;
-        // ลิงก์เปิดแอป Google Maps ที่ถูกต้อง
         const mapOpenUrl = `https://www.google.com/maps/search/?api=1&query=${query}`;
         
         const mainImg = currentItemImages[0];
@@ -272,11 +252,11 @@ document.addEventListener('DOMContentLoaded', () => {
         `;
 
         modal.classList.remove('hidden');
+        history.pushState({ modalOpen: true }, "", "#detail");
         document.body.style.overflow = 'hidden';
         updateGalleryDisplay();
         startSlideshow();
 
-        // Update Big Map below
         const bigMap = document.getElementById('googleMap');
         if(bigMap) {
             bigMap.src = mapEmbedUrl;
@@ -323,16 +303,27 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     function stopSlideshow() { clearInterval(slideshowInterval); }
 
+    window.addEventListener('popstate', (event) => {
+        if (!modal.classList.contains('hidden')) {
+            modal.classList.add('hidden');
+            document.body.style.overflow = 'auto';
+            stopSlideshow();
+        }
+    });
+
     window.closeModalFunc = () => {
-        modal.classList.add('hidden');
-        document.body.style.overflow = 'auto';
-        stopSlideshow();
+        if (history.state && history.state.modalOpen) {
+            history.back();
+        } else {
+            modal.classList.add('hidden');
+            document.body.style.overflow = 'auto';
+            stopSlideshow();
+        }
     };
     closeModalBtn.onclick = closeModalFunc;
 
     backToTop.onclick = () => window.scrollTo({ top: 0, behavior: 'smooth' });
 
-    // Custom Dropdown Logic
     const dropdownBtn = document.getElementById('dropdownBtn');
     const dropdownList = document.getElementById('dropdownList');
     const dropdownArrow = document.getElementById('dropdownArrow');
@@ -390,7 +381,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    // Random Travel Logic
     window.randomTravel = () => {
         const randomIndex = Math.floor(Math.random() * attractions.length);
         const randomItem = attractions[randomIndex];
