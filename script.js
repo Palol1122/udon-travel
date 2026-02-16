@@ -330,13 +330,35 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    window.closeModalFunc = () => {
-        modal.classList.add('hidden');
-        document.body.style.overflow = 'auto';
-        stopSlideshow();
-        if (history.state && history.state.modalOpen) {
-            history.back();
+   window.closeModalFunc = () => {
+        const modal = document.getElementById('detailModal');
+        
+        // 1. สั่งบังคับซ่อนทันทีแบบไม่ต้องมีเงื่อนไข
+        if (modal) {
+            modal.classList.add('hidden');
+            modal.classList.remove('flex'); // ใส่กันเหนียวไว้เผื่อ CSS ตีกัน
         }
+        
+        // 2. ปลดล็อคให้หน้าเว็บกลับมาเลื่อนขึ้นลงได้
+        document.body.style.overflow = 'auto';
+        
+        // 3. ปิดสไลด์โชว์ (ใช้ try-catch ป้องกัน error หยุดการทำงาน)
+        try {
+            if (typeof stopSlideshow === 'function') {
+                stopSlideshow();
+            }
+        } catch (e) {
+            console.log("Slideshow stop error:", e);
+        }
+
+        // ตัดโค้ด history.back() ทิ้งไปเลยเพื่อไม่ให้เบราว์เซอร์สับสน
+    };
+
+    // 4. บังคับผูกปุ่มกากบาท (X) ให้เรียกใช้ฟังก์ชันนี้โดยตรง
+    const closeBtn = document.querySelector('.close-modal');
+    if (closeBtn) {
+        closeBtn.onclick = window.closeModalFunc;
+    }
     };
     };
     closeModalBtn.onclick = closeModalFunc;
