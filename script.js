@@ -331,13 +331,13 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     window.closeModalFunc = () => {
+        modal.classList.add('hidden');
+        document.body.style.overflow = 'auto';
+        stopSlideshow();
         if (history.state && history.state.modalOpen) {
             history.back();
-        } else {
-            modal.classList.add('hidden');
-            document.body.style.overflow = 'auto';
-            stopSlideshow();
         }
+    };
     };
     closeModalBtn.onclick = closeModalFunc;
 
@@ -409,3 +409,4 @@ document.addEventListener('DOMContentLoaded', () => {
     
     renderCards(attractions);
 });
+
