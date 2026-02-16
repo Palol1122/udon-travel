@@ -1,5 +1,8 @@
+
+ไฮไลต์โฟลเดอร์
+ข้อมูลหลักคือ คู่มือเที่ยวอุดรธานี ฉบับปี 2025 รวบรวม 15 ที่เที่ยวห้ามพลาด พร้อมแผนที่และรายละเอียดครบถ้วน
+
 document.addEventListener('DOMContentLoaded', () => {
-    // --- ตัวแปรหลัก (DOM Elements) ---
     const cardGrid = document.getElementById('cardGrid');
     const searchInput = document.getElementById('searchInput');
     const filterCategory = document.getElementById('filterCategory');
@@ -8,9 +11,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const modalBody = document.getElementById('modalBody');
     const backToTop = document.getElementById('backToTop');
     const navbar = document.getElementById('navbar');
-    // หมายเหตุ: ปุ่ม close-modal จะถูกดึงใหม่ตอนเปิด Modal เสมอ
+    const closeModalBtn = document.querySelector('.close-modal');
 
-    // --- 1. Helper Functions ---
+    // Utility: Debounce
     function debounce(func, wait) {
         let timeout;
         return function(...args) {
@@ -19,7 +22,7 @@ document.addEventListener('DOMContentLoaded', () => {
         };
     }
 
-    // --- 2. Mobile Menu & Theme ---
+    // --- 1. Mobile Menu & Theme Toggle ---
     const menuBtn = document.getElementById('menu-btn');
     const mobileMenu = document.getElementById('mobile-menu');
     const themeToggle = document.getElementById('theme-toggle');        
@@ -48,7 +51,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if(themeToggleMobile) themeToggleMobile.innerText = text;
     }
 
-    // ตรวจสอบ Theme เริ่มต้น
     if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
         document.documentElement.classList.add('dark');
         if(themeToggle) themeToggle.innerText = '☀️ Light';
@@ -58,12 +60,13 @@ document.addEventListener('DOMContentLoaded', () => {
     if(themeToggle) themeToggle.addEventListener('click', toggleTheme);
     if(themeToggleMobile) themeToggleMobile.addEventListener('click', toggleTheme);
 
-    // --- 3. Card Rendering ---
+    // --- 2. Slideshow Variables ---
     let currentImageIndex = 0;
     let currentItemImages = [];
     let slideshowInterval;
     let animationTimeouts = [];
 
+    // --- 3. Render Cards ---
     function renderCards(data) {
         animationTimeouts.forEach(clearTimeout);
         animationTimeouts = [];
@@ -112,6 +115,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // --- 4. Event Delegation ---
     cardGrid.addEventListener('click', (e) => {
         const card = e.target.closest('[data-id]');
         if (card) {
@@ -139,7 +143,7 @@ document.addEventListener('DOMContentLoaded', () => {
     searchInput.addEventListener('input', debounce(handleFilter, 300));
     filterCategory.addEventListener('change', handleFilter);
 
-    // --- 4. Scroll Effects ---
+    // --- 5. Scroll Effects ---
     let isScrolling = false;
     const heroText = document.getElementById('hero-text');
 
@@ -181,13 +185,12 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }, { threshold: 0.1 });
 
-    const observerTargets = ['attractions-title', 'search-container', 'map-title', 'map-container'];
-    observerTargets.forEach(id => {
+    ['attractions-title', 'search-container', 'map-title', 'map-container'].forEach(id => {
         const el = document.getElementById(id);
         if(el) sectionObserver.observe(el);
     });
 
-    // --- 5. Modal Logic (แก้ปัญหาต้องกด 2 ครั้งตรงนี้) ---
+    // --- 6. Modal Logic (Updated with Nearby Feature) ---
     const openModal = (id) => {
         const item = attractions.find(a => a.id === id);
         if (!item) return;
@@ -209,11 +212,13 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         const query = encodeURIComponent(item.name + ' อุดรธานี');
+        const mapEmbedUrl = `https://maps.google.com/maps?q=${query}&t=&z=15&ie=UTF8&iwloc=&output=embed`;
         const mapOpenUrl = `https://www.google.com/maps/search/?api=1&query=${query}`;
-        
         const mainImg = currentItemImages[0];
 
-        // ใส่ข้อมูล HTML
+        const nearbyPlaces = getNearbyPlaces(item.id, item.lat, item.lng);
+        const nearbyHTML = generateNearbyHTML(nearbyPlaces);
+
         modalBody.innerHTML = `
             <div class="relative w-full h-[300px] md:h-[450px] bg-black group">
                 <button class="absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 flex items-center justify-center bg-white/20 hover:bg-white/40 text-white rounded-full backdrop-blur-md z-10 transition-all opacity-100 md:opacity-0 md:group-hover:opacity-100 active:scale-90" onclick="moveSlide(-1)">❮</button>
@@ -255,30 +260,19 @@ document.addEventListener('DOMContentLoaded', () => {
                         🗺️ เปิด Google Maps
                     </a>
                 </div>
+
+                ${nearbyHTML}
             </div>
         `;
 
-        // 1. แสดง Modal
         modal.classList.remove('hidden');
-        modal.classList.add('flex'); // เพิ่ม flex ให้ชัวร์
-        
-        // 2. จัดการ History (เผื่อกด Back)
-        history.pushState({ modalOpen: true }, "", "#detail");
         document.body.style.overflow = 'hidden';
-        
-        // 3. Force Scroll to Top
-        modalBody.scrollTo({ top: 0, behavior: 'instant' }); 
-        setTimeout(() => {
-             modalBody.scrollTo({ top: 0, behavior: 'instant' });
-        }, 50);
-
         updateGalleryDisplay();
         startSlideshow();
 
-        // **สำคัญ: ผูกปุ่มปิดหลังจากสร้างเนื้อหาเสร็จแล้ว**
-        const newCloseBtn = document.querySelector('.close-modal');
-        if(newCloseBtn) {
-            newCloseBtn.onclick = window.closeModalFunc;
+        const bigMap = document.getElementById('googleMap');
+        if(bigMap) {
+            bigMap.src = mapEmbedUrl;
         }
     };
 
@@ -322,107 +316,129 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     function stopSlideshow() { clearInterval(slideshowInterval); }
 
-    // --- ฟังก์ชันปิด Modal (แก้ไขใหม่: คลิกเดียวหายทันที) ---
     window.closeModalFunc = () => {
-        const modal = document.getElementById('detailModal');
-        
-        // 1. สั่งปิด CSS ทันที
-        if (modal) {
-            modal.classList.add('hidden');
-            modal.classList.remove('flex');
-        }
-        
-        // 2. คืนค่า Scroll
+        modal.classList.add('hidden');
         document.body.style.overflow = 'auto';
-        
-        // 3. หยุดสไลด์
-        if (typeof stopSlideshow === 'function') {
-            stopSlideshow();
-        }
-
-        // 4. (Optional) เคลียร์ History URL ให้สวยงาม แต่ไม่ใช้ back() เพื่อกันปัญหา
-        if (history.state && history.state.modalOpen) {
-             history.replaceState(null, null, window.location.pathname);
-        }
+        stopSlideshow();
     };
-
-    // จัดการปุ่ม Back ของ Browser
-    window.addEventListener('popstate', (event) => {
-        const modal = document.getElementById('detailModal');
-        if (modal && !modal.classList.contains('hidden')) {
-            window.closeModalFunc();
-        }
-    });
+    closeModalBtn.onclick = closeModalFunc;
 
     backToTop.onclick = () => window.scrollTo({ top: 0, behavior: 'smooth' });
 
-    // --- 6. Dropdown & Extras ---
+    // Dropdown Logic
     const dropdownBtn = document.getElementById('dropdownBtn');
     const dropdownList = document.getElementById('dropdownList');
     const dropdownArrow = document.getElementById('dropdownArrow');
     const selectedText = document.getElementById('selectedText');
+    const dropdownItems = dropdownList.querySelectorAll('li');
     const hiddenInput = document.getElementById('filterCategory');
 
-    // ถ้ามี Dropdown ในหน้าเว็บ
-    if(dropdownBtn && dropdownList) {
-        const dropdownItems = dropdownList.querySelectorAll('li');
+    dropdownBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const isOpen = !dropdownList.classList.contains('invisible');
+        if (isOpen) closeDropdown();
+        else openDropdown();
+    });
 
-        dropdownBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            const isOpen = !dropdownList.classList.contains('invisible');
-            if (isOpen) closeDropdown();
-            else openDropdown();
+    function openDropdown() {
+        dropdownList.classList.remove('invisible', 'opacity-0', 'scale-95');
+        dropdownList.classList.add('opacity-100', 'scale-100');
+        dropdownArrow.classList.add('rotate-180');
+        dropdownItems.forEach((item) => {
+            item.classList.remove('translate-y-2', 'opacity-0');
         });
-
-        function openDropdown() {
-            dropdownList.classList.remove('invisible', 'opacity-0', 'scale-95');
-            dropdownList.classList.add('opacity-100', 'scale-100');
-            dropdownArrow.classList.add('rotate-180');
-            dropdownItems.forEach((item) => {
-                item.classList.remove('translate-y-2', 'opacity-0');
-            });
-        }
-
-        function closeDropdown() {
-            dropdownList.classList.add('invisible', 'opacity-0', 'scale-95');
-            dropdownList.classList.remove('opacity-100', 'scale-100');
-            dropdownArrow.classList.remove('rotate-180');
-            dropdownItems.forEach((item) => {
-                item.classList.add('translate-y-2', 'opacity-0');
-            });
-        }
-
-        dropdownItems.forEach(item => {
-            item.addEventListener('click', () => {
-                const value = item.getAttribute('data-value');
-                const text = item.innerText;
-                selectedText.innerText = text;
-                hiddenInput.value = value;
-                handleFilter();
-                closeDropdown();
-            });
-        });
-        window.addEventListener('click', () => { closeDropdown(); });
     }
-    
-    window.sharePlace = (name, desc) => {
-        if (navigator.share) {
-            navigator.share({
-                title: `ไปเที่ยว ${name} กันเถอะ!`,
-                text: `${name}: ${desc}`,
-                url: window.location.href
-            }).catch(console.error);
-        } else {
-            alert('คัดลอกลิงก์เรียบร้อยแล้ว!');
-        }
-    };
 
+    function closeDropdown() {
+        dropdownList.classList.add('invisible', 'opacity-0', 'scale-95');
+        dropdownList.classList.remove('opacity-100', 'scale-100');
+        dropdownArrow.classList.remove('rotate-180');
+        dropdownItems.forEach((item) => {
+            item.classList.add('translate-y-2', 'opacity-0');
+        });
+    }
+
+    dropdownItems.forEach(item => {
+        item.addEventListener('click', () => {
+            const value = item.getAttribute('data-value');
+            const text = item.innerText;
+            selectedText.innerText = text;
+            hiddenInput.value = value;
+            handleFilter();
+            closeDropdown();
+        });
+    });
+
+    window.addEventListener('click', () => { closeDropdown(); });
+    
     window.randomTravel = () => {
         const randomIndex = Math.floor(Math.random() * attractions.length);
         const randomItem = attractions[randomIndex];
         openModal(randomItem.id);
     };
+    function calculateDistance(lat1, lon1, lat2, lon2) {
+        const R = 6371;
+        const dLat = (lat2 - lat1) * (Math.PI / 180);
+        const dLon = (lon2 - lon1) * (Math.PI / 180);
+        const a =
+            Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+            Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) *
+            Math.sin(dLon / 2) * Math.sin(dLon / 2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        return R * c;
+    }
+
+    function getNearbyPlaces(currentId, currentLat, currentLng) {
+        const placesWithDistance = attractions
+            .filter(item => item.id !== currentId) 
+            .map(item => {
+                return {
+                    ...item,
+                    distance: calculateDistance(currentLat, currentLng, item.lat, item.lng)
+                };
+            });
+
+        return placesWithDistance
+            .sort((a, b) => a.distance - b.distance)
+            .slice(0, 3);
+    }
+
+    function generateNearbyHTML(nearbyItems) {
+        if (!nearbyItems || nearbyItems.length === 0) return '';
+
+        let html = `
+            <div class="mt-8 pt-6 border-t border-gray-200 dark:border-gray-700 animate-slide-up">
+                <h4 class="text-xl font-bold mb-4 flex items-center gap-2 text-gray-800 dark:text-gray-100">
+                    🚀 สถานที่ท่องเที่ยวใกล้เคียง
+                </h4>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        `;
+        
+        nearbyItems.forEach(item => {
+            const img = item.images && item.images.length > 0 ? item.images[0] : 'https://placehold.co/600x400';
+            
+            html += `
+                <div class="bg-gray-50 dark:bg-gray-700/50 p-3 rounded-xl cursor-pointer hover:bg-primary/10 dark:hover:bg-gray-600 transition-all border border-transparent hover:border-primary group" 
+                     onclick="openModal(${item.id})">
+                    <div class="h-32 rounded-lg overflow-hidden mb-2 relative">
+                        <img src="${img}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500">
+                        <span class="absolute bottom-1 right-1 bg-black/60 text-white text-[10px] px-2 py-0.5 rounded-full">
+                            ห่าง ${item.distance.toFixed(1)} กม.
+                        </span>
+                    </div>
+                    <h5 class="font-bold text-sm truncate text-gray-800 dark:text-gray-200 group-hover:text-primary">
+                        ${item.name}
+                    </h5>
+                    <p class="text-xs text-gray-500 dark:text-gray-400">
+                        ${getCategoryName(item.category)}
+                    </p>
+                </div>
+            `;
+        });
+        
+        html += `</div></div>`;
+        return html;
+    }
     
-    // เริ่มต้นแสดงผลการ์ด
     renderCards(attractions);
 });
