@@ -117,9 +117,8 @@
         </div>
     </nav>
 
-    <header id="home" class="h-screen relative flex items-center justify-center text-center text-white bg-cover bg-center overflow-hidden group bg-scroll md:bg-fixed" 
-style="background-image: url('https://images.unsplash.com/photo-1528181304800-259b08848526?auto=format&fit=crop&w=1600');">
-        
+    <header id="home" class="h-screen relative flex items-center justify-center text-center text-white bg-cover bg-center overflow-hidden group" 
+    style="background-image: url('https://images.unsplash.com/photo-1528181304800-259b08848526?auto=format&fit=crop&w=1600'); background-attachment: fixed;">
         <div class="absolute inset-0 bg-black/40 transition duration-500 group-hover:bg-black/30"></div>
         
         <div class="relative z-10 px-4 transition-all duration-100 ease-out" id="hero-text">
@@ -132,6 +131,12 @@ style="background-image: url('https://images.unsplash.com/photo-1528181304800-25
                     เริ่มออกเดินทาง
                 </a>
             </div>
+        </div>
+        
+        <div class="absolute bottom-10 left-1/2 transform -translate-x-1/2 animate-bounce cursor-pointer" onclick="document.getElementById('attractions').scrollIntoView({behavior: 'smooth'})">
+            <svg class="w-10 h-10 text-white/80 hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path>
+            </svg>
         </div>
     </header>
 
@@ -149,7 +154,7 @@ style="background-image: url('https://images.unsplash.com/photo-1528181304800-25
                 <ul id="dropdownList" class="absolute z-50 w-full mt-2 bg-white dark:bg-darkCard border border-gray-200 dark:border-gray-700 rounded-xl shadow-xl overflow-hidden opacity-0 invisible transform scale-95 origin-top transition-all duration-300 ease-out">
                     <li data-value="all" class="p-3 cursor-pointer hover:bg-primary/10 hover:text-primary transition-colors border-b border-gray-100 dark:border-gray-700 last:border-0 translate-y-2 opacity-0 transition-all duration-300 delay-[0ms]">ทั้งหมด</li>
                     <li data-value="nature" class="p-3 cursor-pointer hover:bg-primary/10 hover:text-primary transition-colors border-b border-gray-100 dark:border-gray-700 last:border-0 translate-y-2 opacity-0 transition-all duration-300 delay-[50ms]">🌳 ธรรมชาติ</li>
-                    <li data-value="temple" class="p-3 cursor-pointer hover:bg-primary/10 hover:text-primary transition-colors border-b border-gray-100 dark:border-gray-700 last:border-0 translate-y-2 opacity-0 transtion-all duration-300 delay-[100ms]">🙏 วัด/ศาสนา</li>
+                    <li data-value="temple" class="p-3 cursor-pointer hover:bg-primary/10 hover:text-primary transition-colors border-b border-gray-100 dark:border-gray-700 last:border-0 translate-y-2 opacity-0 transition-all duration-300 delay-[100ms]">🙏 วัด/ศาสนา</li>
                     <li data-value="culture" class="p-3 cursor-pointer hover:bg-primary/10 hover:text-primary transition-colors border-b border-gray-100 dark:border-gray-700 last:border-0 translate-y-2 opacity-0 transition-all duration-300 delay-[150ms]">🏺 วัฒนธรรม</li>
                     <li data-value="city" class="p-3 cursor-pointer hover:bg-primary/10 hover:text-primary transition-colors border-b border-gray-100 dark:border-gray-700 last:border-0 translate-y-2 opacity-0 transition-all duration-300 delay-[200ms]">🏙️ ในเมือง</li>
                 </ul>
@@ -186,20 +191,20 @@ style="background-image: url('https://images.unsplash.com/photo-1528181304800-25
             <div class="flex flex-col md:flex-row justify-between items-center mb-8">
                 <div class="text-center md:text-left mb-6 md:mb-0">
                     <a href="#" class="text-2xl font-bold text-primary">UDON<span class="text-secondary">TRAVEL</span></a>
-                    <p class="text-gray-500 mt-2 text-sm">คู่มือท่องเที่ยวออนไลน์อุดรธานี</p>
+                    <p class="text-gray-500 mt-2 text-sm">คู่มือท่องเที่ยวออนไลน์ที่ดีที่สุดในอุดรธานี</p>
                 </div>
                 
                 <div class="flex gap-4">
-                    <a href="https://www.facebook.com/share/1AY5tsMLqP/" class="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center text-gray-600 dark:text-gray-300 hover:bg-[#1877F2] hover:text-white transition-all transform hover:scale-110">
+                    <a href="#" class="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center text-gray-600 dark:text-gray-300 hover:bg-[#1877F2] hover:text-white transition-all transform hover:scale-110">
                         <i class="fab fa-facebook-f text-lg"></i>
                     </a>
                     
-                    <a href="https://www.instagram.com/chakkraphat_2005?igsh=MWxweGpxMm82MTdlNg==" class="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center text-gray-600 dark:text-gray-300 hover:bg-gradient-to-tr hover:from-[#f9ce34] hover:via-[#ee2a7b] hover:to-[#6228d7] hover:text-white transition-all transform hover:scale-110">
+                    <a href="#" class="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center text-gray-600 dark:text-gray-300 hover:bg-gradient-to-tr hover:from-[#f9ce34] hover:via-[#ee2a7b] hover:to-[#6228d7] hover:text-white transition-all transform hover:scale-110">
                         <i class="fab fa-instagram text-lg"></i>
                     </a>
                     
-                    <a href="https://youtu.be/dQw4w9WgXcQ?si=_qMY1BVDSX4D3zpW" class="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center text-gray-600 dark:text-gray-300 hover:bg-black hover:text-white transition-all transform hover:scale-110">
-                        <i class="fa-brands fa-youtube text-lg"></i>
+                    <a href="#" class="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center text-gray-600 dark:text-gray-300 hover:bg-black hover:text-white transition-all transform hover:scale-110">
+                        <i class="fa-brands fa-x-twitter text-lg"></i>
                     </a>
                 </div>
             </div>
@@ -226,9 +231,4 @@ style="background-image: url('https://images.unsplash.com/photo-1528181304800-25
     <script src="data.js"></script>
     <script src="script.js"></script>
 </body>
-
 </html>
-
-
-
-

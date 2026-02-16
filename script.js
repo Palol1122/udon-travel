@@ -1,5 +1,4 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // --- ตัวแปรหลัก (DOM Elements) ---
     const cardGrid = document.getElementById('cardGrid');
     const searchInput = document.getElementById('searchInput');
     const filterCategory = document.getElementById('filterCategory');
@@ -8,9 +7,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const modalBody = document.getElementById('modalBody');
     const backToTop = document.getElementById('backToTop');
     const navbar = document.getElementById('navbar');
-    // หมายเหตุ: ปุ่ม close-modal จะถูกดึงใหม่ตอนเปิด Modal เสมอ
+    const closeModalBtn = document.querySelector('.close-modal');
 
-    // --- 1. Helper Functions ---
+    // Utility: Debounce เพื่อชะลอการทำงานของ Search/Filter
     function debounce(func, wait) {
         let timeout;
         return function(...args) {
@@ -19,7 +18,7 @@ document.addEventListener('DOMContentLoaded', () => {
         };
     }
 
-    // --- 2. Mobile Menu & Theme ---
+    // --- 1. Mobile Menu & Theme Toggle ---
     const menuBtn = document.getElementById('menu-btn');
     const mobileMenu = document.getElementById('mobile-menu');
     const themeToggle = document.getElementById('theme-toggle');        
@@ -48,7 +47,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if(themeToggleMobile) themeToggleMobile.innerText = text;
     }
 
-    // ตรวจสอบ Theme เริ่มต้น
     if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
         document.documentElement.classList.add('dark');
         if(themeToggle) themeToggle.innerText = '☀️ Light';
@@ -58,13 +56,16 @@ document.addEventListener('DOMContentLoaded', () => {
     if(themeToggle) themeToggle.addEventListener('click', toggleTheme);
     if(themeToggleMobile) themeToggleMobile.addEventListener('click', toggleTheme);
 
-    // --- 3. Card Rendering ---
+
+    // --- 2. Slideshow Variables ---
     let currentImageIndex = 0;
     let currentItemImages = [];
     let slideshowInterval;
-    let animationTimeouts = [];
+    let animationTimeouts = []; // เก็บ Timeout ID เพื่อเคลียร์เมื่อค้นหาใหม่
 
+    // --- 3. Render Cards ---
     function renderCards(data) {
+        // เคลียร์ Animation เก่าที่รันค้างอยู่
         animationTimeouts.forEach(clearTimeout);
         animationTimeouts = [];
 
@@ -79,6 +80,7 @@ document.addEventListener('DOMContentLoaded', () => {
         data.forEach((item, index) => {
             const card = document.createElement('div');
             card.setAttribute('data-id', item.id);
+            // เพิ่ม class opacity-0 รอ animation
             card.className = 'bg-white dark:bg-darkCard rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl hover:-translate-y-2 transition-all duration-500 cursor-pointer group opacity-0';
 
             const coverImage = item.images && item.images.length > 0 ? item.images[0] : 'https://placehold.co/600x400';
@@ -104,14 +106,16 @@ document.addEventListener('DOMContentLoaded', () => {
             `;
             cardGrid.appendChild(card);
             
+            // Stagger Animation
             const timeoutId = setTimeout(() => {
                 card.classList.remove('opacity-0');
                 card.classList.add('animate-slide-up');
-            }, index * 100);
+            }, index * 100); // เร็วขึ้นเล็กน้อย
             animationTimeouts.push(timeoutId);
         });
     }
 
+    // --- 4. Event Delegation ---
     cardGrid.addEventListener('click', (e) => {
         const card = e.target.closest('[data-id]');
         if (card) {
@@ -136,10 +140,12 @@ document.addEventListener('DOMContentLoaded', () => {
         renderCards(filtered);
     }
     
+    // ใช้ Debounce 300ms เพื่อลดการประมวลผลขณะพิมพ์
     searchInput.addEventListener('input', debounce(handleFilter, 300));
     filterCategory.addEventListener('change', handleFilter);
 
-    // --- 4. Scroll Effects ---
+
+    // --- 5. Scroll Fade Effect (Optimized with requestAnimationFrame) ---
     let isScrolling = false;
     const heroText = document.getElementById('hero-text');
 
@@ -156,6 +162,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function handleScrollEffects() {
         const scrollPosition = window.scrollY;
         
+        // Hero Text Parallax
         if (heroText) {
             let opacity = 1 - (scrollPosition / 500);
             let translateY = scrollPosition * 0.5;
@@ -164,13 +171,16 @@ document.addEventListener('DOMContentLoaded', () => {
             heroText.style.transform = `translateY(${translateY}px)`;
         }
 
+        // Navbar Change
         if (scrollPosition > 50) navbar.classList.add('shadow-sm', 'bg-white/90', 'dark:bg-darkCard/90', 'backdrop-blur-md');
         else navbar.classList.remove('shadow-sm', 'bg-white/90', 'dark:bg-darkCard/90', 'backdrop-blur-md');
         
+        // Back to Top Button
         if (scrollPosition > 300) backToTop.classList.remove('hidden');
         else backToTop.classList.add('hidden');
     }
 
+    // Intersection Observer (Efficient Scroll Animations)
     const sectionObserver = new IntersectionObserver((entries) => {
         entries.forEach(entry => {
             if (entry.isIntersecting) {
@@ -187,7 +197,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if(el) sectionObserver.observe(el);
     });
 
-    // --- 5. Modal Logic (แก้ปัญหาต้องกด 2 ครั้งตรงนี้) ---
+
+    // --- 6. Modal Logic ---
     const openModal = (id) => {
         const item = attractions.find(a => a.id === id);
         if (!item) return;
@@ -209,11 +220,13 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         const query = encodeURIComponent(item.name + ' อุดรธานี');
+        // ใช้ Legacy Embed (อาจติด Watermark หากไม่มี API Key) แต่ดีกว่าลิงก์เสีย
+        const mapEmbedUrl = `https://maps.google.com/maps?q=${query}&t=&z=15&ie=UTF8&iwloc=&output=embed`;
+        // ลิงก์เปิดแอป Google Maps ที่ถูกต้อง
         const mapOpenUrl = `https://www.google.com/maps/search/?api=1&query=${query}`;
         
         const mainImg = currentItemImages[0];
 
-        // ใส่ข้อมูล HTML
         modalBody.innerHTML = `
             <div class="relative w-full h-[300px] md:h-[450px] bg-black group">
                 <button class="absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 flex items-center justify-center bg-white/20 hover:bg-white/40 text-white rounded-full backdrop-blur-md z-10 transition-all opacity-100 md:opacity-0 md:group-hover:opacity-100 active:scale-90" onclick="moveSlide(-1)">❮</button>
@@ -258,27 +271,15 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
         `;
 
-        // 1. แสดง Modal
         modal.classList.remove('hidden');
-        modal.classList.add('flex'); // เพิ่ม flex ให้ชัวร์
-        
-        // 2. จัดการ History (เผื่อกด Back)
-        history.pushState({ modalOpen: true }, "", "#detail");
         document.body.style.overflow = 'hidden';
-        
-        // 3. Force Scroll to Top
-        modalBody.scrollTo({ top: 0, behavior: 'instant' }); 
-        setTimeout(() => {
-             modalBody.scrollTo({ top: 0, behavior: 'instant' });
-        }, 50);
-
         updateGalleryDisplay();
         startSlideshow();
 
-        // **สำคัญ: ผูกปุ่มปิดหลังจากสร้างเนื้อหาเสร็จแล้ว**
-        const newCloseBtn = document.querySelector('.close-modal');
-        if(newCloseBtn) {
-            newCloseBtn.onclick = window.closeModalFunc;
+        // Update Big Map below
+        const bigMap = document.getElementById('googleMap');
+        if(bigMap) {
+            bigMap.src = mapEmbedUrl;
         }
     };
 
@@ -322,88 +323,60 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     function stopSlideshow() { clearInterval(slideshowInterval); }
 
-    // --- ฟังก์ชันปิด Modal (แก้ไขใหม่: คลิกเดียวหายทันที) ---
     window.closeModalFunc = () => {
-        const modal = document.getElementById('detailModal');
-        
-        // 1. สั่งปิด CSS ทันที
-        if (modal) {
-            modal.classList.add('hidden');
-            modal.classList.remove('flex');
-        }
-        
-        // 2. คืนค่า Scroll
+        modal.classList.add('hidden');
         document.body.style.overflow = 'auto';
-        
-        // 3. หยุดสไลด์
-        if (typeof stopSlideshow === 'function') {
-            stopSlideshow();
-        }
-
-        // 4. (Optional) เคลียร์ History URL ให้สวยงาม แต่ไม่ใช้ back() เพื่อกันปัญหา
-        if (history.state && history.state.modalOpen) {
-             history.replaceState(null, null, window.location.pathname);
-        }
+        stopSlideshow();
     };
-
-    // จัดการปุ่ม Back ของ Browser
-    window.addEventListener('popstate', (event) => {
-        const modal = document.getElementById('detailModal');
-        if (modal && !modal.classList.contains('hidden')) {
-            window.closeModalFunc();
-        }
-    });
+    closeModalBtn.onclick = closeModalFunc;
 
     backToTop.onclick = () => window.scrollTo({ top: 0, behavior: 'smooth' });
 
-    // --- 6. Dropdown & Extras ---
+    // Custom Dropdown Logic
     const dropdownBtn = document.getElementById('dropdownBtn');
     const dropdownList = document.getElementById('dropdownList');
     const dropdownArrow = document.getElementById('dropdownArrow');
     const selectedText = document.getElementById('selectedText');
+    const dropdownItems = dropdownList.querySelectorAll('li');
     const hiddenInput = document.getElementById('filterCategory');
 
-    // ถ้ามี Dropdown ในหน้าเว็บ
-    if(dropdownBtn && dropdownList) {
-        const dropdownItems = dropdownList.querySelectorAll('li');
+    dropdownBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const isOpen = !dropdownList.classList.contains('invisible');
+        if (isOpen) closeDropdown();
+        else openDropdown();
+    });
 
-        dropdownBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            const isOpen = !dropdownList.classList.contains('invisible');
-            if (isOpen) closeDropdown();
-            else openDropdown();
+    function openDropdown() {
+        dropdownList.classList.remove('invisible', 'opacity-0', 'scale-95');
+        dropdownList.classList.add('opacity-100', 'scale-100');
+        dropdownArrow.classList.add('rotate-180');
+        dropdownItems.forEach((item) => {
+            item.classList.remove('translate-y-2', 'opacity-0');
         });
-
-        function openDropdown() {
-            dropdownList.classList.remove('invisible', 'opacity-0', 'scale-95');
-            dropdownList.classList.add('opacity-100', 'scale-100');
-            dropdownArrow.classList.add('rotate-180');
-            dropdownItems.forEach((item) => {
-                item.classList.remove('translate-y-2', 'opacity-0');
-            });
-        }
-
-        function closeDropdown() {
-            dropdownList.classList.add('invisible', 'opacity-0', 'scale-95');
-            dropdownList.classList.remove('opacity-100', 'scale-100');
-            dropdownArrow.classList.remove('rotate-180');
-            dropdownItems.forEach((item) => {
-                item.classList.add('translate-y-2', 'opacity-0');
-            });
-        }
-
-        dropdownItems.forEach(item => {
-            item.addEventListener('click', () => {
-                const value = item.getAttribute('data-value');
-                const text = item.innerText;
-                selectedText.innerText = text;
-                hiddenInput.value = value;
-                handleFilter();
-                closeDropdown();
-            });
-        });
-        window.addEventListener('click', () => { closeDropdown(); });
     }
+
+    function closeDropdown() {
+        dropdownList.classList.add('invisible', 'opacity-0', 'scale-95');
+        dropdownList.classList.remove('opacity-100', 'scale-100');
+        dropdownArrow.classList.remove('rotate-180');
+        dropdownItems.forEach((item) => {
+            item.classList.add('translate-y-2', 'opacity-0');
+        });
+    }
+
+    dropdownItems.forEach(item => {
+        item.addEventListener('click', () => {
+            const value = item.getAttribute('data-value');
+            const text = item.innerText;
+            selectedText.innerText = text;
+            hiddenInput.value = value;
+            handleFilter();
+            closeDropdown();
+        });
+    });
+
+    window.addEventListener('click', () => { closeDropdown(); });
     
     window.sharePlace = (name, desc) => {
         if (navigator.share) {
@@ -417,12 +390,12 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
+    // Random Travel Logic
     window.randomTravel = () => {
         const randomIndex = Math.floor(Math.random() * attractions.length);
         const randomItem = attractions[randomIndex];
         openModal(randomItem.id);
     };
     
-    // เริ่มต้นแสดงผลการ์ด
     renderCards(attractions);
 });
