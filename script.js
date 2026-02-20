@@ -60,6 +60,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return R * c;
     };
 
+        // ฟังก์ชันดึงตำแหน่งและคำนวณระยะทางขับรถจริง (ตามเส้นทางถนน)
     const findNearbyPlaces = () => {
         if (!navigator.geolocation) {
             alert("เบราว์เซอร์ของคุณไม่รองรับการระบุตำแหน่งครับ");
@@ -67,28 +68,67 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         const originalText = DOM.nearbyBtn.innerHTML;
-        DOM.nearbyBtn.innerHTML = '⏳ กำลังค้นหา...';
+        DOM.nearbyBtn.innerHTML = '⏳ กำลังคำนวณเส้นทางถนน...';
 
-        navigator.geolocation.getCurrentPosition((position) => {
+        const options = {
+            enableHighAccuracy: true,
+            timeout: 15000,
+            maximumAge: 0
+        };
+
+        navigator.geolocation.getCurrentPosition(async (position) => {
             const userLat = position.coords.latitude;
             const userLng = position.coords.longitude;
 
-            let placesWithDistance = attractions.map(item => {
-                const distance = calculateDistance(userLat, userLng, item.lat, item.lng);
-                return { ...item, distance: distance };
-            });
+            try {
+                // ใช้ Promise.all เพื่อดึงข้อมูลจาก Routing API ทีละสถานที่พร้อมๆ กัน
+                let placesWithRouteDistance = await Promise.all(attractions.map(async (item) => {
+                    try {
+                        // เรียกใช้ OSRM API (ฟรี ไม่ต้องใช้ API Key) เพื่อหาระยะทางขับรถตามถนนจริง
+                        const response = await fetch(`https://router.project-osrm.org/route/v1/driving/${userLng},${userLat};${item.lng},${item.lat}?overview=false`);
+                        const data = await response.json();
+                        
+                        let drivingDistance = 0;
+                        if(data.code === 'Ok' && data.routes.length > 0) {
+                            // OSRM ส่งค่าระยะทางกลับมาเป็นเมตร เราจึงหาร 1000 เพื่อทำเป็นกิโลเมตร
+                            drivingDistance = data.routes[0].distance / 1000;
+                        } else {
+                            // ถ้าหาเส้นทางถนนไม่เจอ ให้กลับไปใช้ระยะทางเส้นตรงแทน (Fallback)
+                            drivingDistance = calculateDistance(userLat, userLng, item.lat, item.lng);
+                        }
+                        
+                        return { ...item, distance: drivingDistance };
+                    } catch (err) {
+                        // ถ้าดึง API ไม่สำเร็จ (เน็ตหลุด) ให้ใช้ระยะทางเส้นตรง
+                        return { ...item, distance: calculateDistance(userLat, userLng, item.lat, item.lng) };
+                    }
+                }));
 
-            placesWithDistance.sort((a, b) => a.distance - b.distance);
-            renderCards(placesWithDistance);
-            
-            DOM.nearbyBtn.innerHTML = originalText;
-            document.getElementById('attractions').scrollIntoView({behavior: 'smooth'});
+                // เรียงลำดับจากสถานที่ที่ขับรถไปถึงใกล้ที่สุด ไปไกลที่สุด
+                placesWithRouteDistance.sort((a, b) => a.distance - b.distance);
+                renderCards(placesWithRouteDistance);
+                
+                DOM.nearbyBtn.innerHTML = originalText;
+                document.getElementById('attractions').scrollIntoView({behavior: 'smooth'});
+
+            } catch (error) {
+                alert("เกิดข้อผิดพลาดในการคำนวณเส้นทาง กรุณาลองใหม่อีกครั้งครับ");
+                DOM.nearbyBtn.innerHTML = originalText;
+            }
 
         }, (error) => {
-            alert("ไม่สามารถดึงตำแหน่งได้ กรุณาอนุญาตการเข้าถึงตำแหน่งที่ตั้ง (Location) ก่อนครับ");
             DOM.nearbyBtn.innerHTML = originalText;
-        });
+            let errorMsg = "ไม่สามารถดึงตำแหน่งได้: \n";
+            switch(error.code) {
+                case error.PERMISSION_DENIED: errorMsg += "คุณยังไม่ได้อนุญาตให้เว็บเข้าถึงตำแหน่ง (Location)"; break;
+                case error.POSITION_UNAVAILABLE: errorMsg += "ไม่พบข้อมูลตำแหน่ง (กรุณาเช็คว่าเปิด GPS หรือยัง)"; break;
+                case error.TIMEOUT: errorMsg += "หมดเวลาในการค้นหา สัญญาณ GPS อาจจะอ่อนครับ"; break;
+                default: errorMsg += "เกิดข้อผิดพลาดที่ไม่ทราบสาเหตุ"; break;
+            }
+            alert(errorMsg);
+        }, options);
     };
+
 
     // ==========================================
     // 4. Theme & Mobile Menu
@@ -441,3 +481,4 @@ document.addEventListener('DOMContentLoaded', () => {
     initScrollEffects();
     renderCards(attractions);
 });
+
