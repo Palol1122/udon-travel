@@ -60,7 +60,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return R * c;
     };
 
-        // ฟังก์ชันดึงตำแหน่งและคำนวณระยะทางขับรถจริง (ตามเส้นทางถนน)
+            // ฟังก์ชันค้นหาสถานที่ใกล้เคียงแบบ Fast & Optimized (ใช้ OSRM Table API)
     const findNearbyPlaces = () => {
         if (!navigator.geolocation) {
             alert("เบราว์เซอร์ของคุณไม่รองรับการระบุตำแหน่งครับ");
@@ -68,43 +68,34 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         const originalText = DOM.nearbyBtn.innerHTML;
-        DOM.nearbyBtn.innerHTML = '⏳ กำลังคำนวณเส้นทางถนน...';
-
-        const options = {
-            enableHighAccuracy: true,
-            timeout: 15000,
-            maximumAge: 0
-        };
+        DOM.nearbyBtn.innerHTML = '⏳ กำลังประมวลผล...';
 
         navigator.geolocation.getCurrentPosition(async (position) => {
             const userLat = position.coords.latitude;
             const userLng = position.coords.longitude;
 
             try {
-                // ใช้ Promise.all เพื่อดึงข้อมูลจาก Routing API ทีละสถานที่พร้อมๆ กัน
-                let placesWithRouteDistance = await Promise.all(attractions.map(async (item) => {
-                    try {
-                        // เรียกใช้ OSRM API (ฟรี ไม่ต้องใช้ API Key) เพื่อหาระยะทางขับรถตามถนนจริง
-                        const response = await fetch(`https://router.project-osrm.org/route/v1/driving/${userLng},${userLat};${item.lng},${item.lat}?overview=false`);
-                        const data = await response.json();
-                        
-                        let drivingDistance = 0;
-                        if(data.code === 'Ok' && data.routes.length > 0) {
-                            // OSRM ส่งค่าระยะทางกลับมาเป็นเมตร เราจึงหาร 1000 เพื่อทำเป็นกิโลเมตร
-                            drivingDistance = data.routes[0].distance / 1000;
-                        } else {
-                            // ถ้าหาเส้นทางถนนไม่เจอ ให้กลับไปใช้ระยะทางเส้นตรงแทน (Fallback)
-                            drivingDistance = calculateDistance(userLat, userLng, item.lat, item.lng);
-                        }
-                        
-                        return { ...item, distance: drivingDistance };
-                    } catch (err) {
-                        // ถ้าดึง API ไม่สำเร็จ (เน็ตหลุด) ให้ใช้ระยะทางเส้นตรง
-                        return { ...item, distance: calculateDistance(userLat, userLng, item.lat, item.lng) };
-                    }
-                }));
+                // 1. นำพิกัดผู้ใช้มาไว้หน้าสุด แล้วตามด้วยพิกัดสถานที่ทั้งหมด (คั่นด้วย ;)
+                const coordsString = `${userLng},${userLat};` + attractions.map(item => `${item.lng},${item.lat}`).join(';');
+                
+                // 2. ยิง API แบบ Table ไป "ครั้งเดียว" (sources=0 คือคำนวณจากจุดแรกไปยังจุดอื่นๆ ทั้งหมด)
+                const response = await fetch(`https://router.project-osrm.org/table/v1/driving/${coordsString}?sources=0`);
+                const data = await response.json();
 
-                // เรียงลำดับจากสถานที่ที่ขับรถไปถึงใกล้ที่สุด ไปไกลที่สุด
+                // 3. นำระยะทางที่ได้มาจับคู่กับการ์ดสถานที่
+                let placesWithRouteDistance = attractions.map((item, index) => {
+                    let distanceVal = 0;
+                    if (data.code === 'Ok' && data.distances && data.distances[0]) {
+                        // index + 1 เพราะข้อมูลตำแหน่งที่ 0 คือระยะทางจากผู้ใช้ไปหาผู้ใช้เอง (ซึ่งคือ 0)
+                        distanceVal = data.distances[0][index + 1] / 1000; // แปลงเมตรเป็นกิโลเมตร
+                    } else {
+                        // Fallback: ถ้าระบบถนนมีปัญหา ให้ใช้ระยะทางกระจัด (เส้นตรง) แทน
+                        distanceVal = calculateDistance(userLat, userLng, item.lat, item.lng);
+                    }
+                    return { ...item, distance: distanceVal };
+                });
+
+                // 4. เรียงลำดับใกล้ไปไกล และแสดงผล
                 placesWithRouteDistance.sort((a, b) => a.distance - b.distance);
                 renderCards(placesWithRouteDistance);
                 
@@ -112,24 +103,22 @@ document.addEventListener('DOMContentLoaded', () => {
                 document.getElementById('attractions').scrollIntoView({behavior: 'smooth'});
 
             } catch (error) {
-                alert("เกิดข้อผิดพลาดในการคำนวณเส้นทาง กรุณาลองใหม่อีกครั้งครับ");
+                // กรณีเน็ตหลุด หรือ API ล่ม จะสลับมาใช้คำนวณระยะทางเส้นตรงทันที (แอปจะได้ไม่ค้าง)
+                let fallbackPlaces = attractions.map(item => ({
+                    ...item,
+                    distance: calculateDistance(userLat, userLng, item.lat, item.lng)
+                })).sort((a, b) => a.distance - b.distance);
+                
+                renderCards(fallbackPlaces);
                 DOM.nearbyBtn.innerHTML = originalText;
+                document.getElementById('attractions').scrollIntoView({behavior: 'smooth'});
             }
 
         }, (error) => {
             DOM.nearbyBtn.innerHTML = originalText;
-            let errorMsg = "ไม่สามารถดึงตำแหน่งได้: \n";
-            switch(error.code) {
-                case error.PERMISSION_DENIED: errorMsg += "คุณยังไม่ได้อนุญาตให้เว็บเข้าถึงตำแหน่ง (Location)"; break;
-                case error.POSITION_UNAVAILABLE: errorMsg += "ไม่พบข้อมูลตำแหน่ง (กรุณาเช็คว่าเปิด GPS หรือยัง)"; break;
-                case error.TIMEOUT: errorMsg += "หมดเวลาในการค้นหา สัญญาณ GPS อาจจะอ่อนครับ"; break;
-                default: errorMsg += "เกิดข้อผิดพลาดที่ไม่ทราบสาเหตุ"; break;
-            }
-            alert(errorMsg);
-        }, options);
+            alert("ไม่สามารถดึงตำแหน่งได้ กรุณาเปิด GPS และอนุญาตการเข้าถึงตำแหน่งครับ");
+        }, { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }); // ลด timeout เหลือ 10 วินาที
     };
-
-
     // ==========================================
     // 4. Theme & Mobile Menu
     // ==========================================
@@ -481,4 +470,5 @@ document.addEventListener('DOMContentLoaded', () => {
     initScrollEffects();
     renderCards(attractions);
 });
+
 
