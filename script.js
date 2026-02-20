@@ -60,7 +60,6 @@ document.addEventListener('DOMContentLoaded', () => {
         return R * c;
     };
 
-            // ฟังก์ชันค้นหาสถานที่ใกล้เคียงแบบ Fast & Optimized (ใช้ OSRM Table API)
     const findNearbyPlaces = () => {
         if (!navigator.geolocation) {
             alert("เบราว์เซอร์ของคุณไม่รองรับการระบุตำแหน่งครับ");
@@ -68,57 +67,29 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         const originalText = DOM.nearbyBtn.innerHTML;
-        DOM.nearbyBtn.innerHTML = '⏳ กำลังประมวลผล...';
+        DOM.nearbyBtn.innerHTML = '⏳ กำลังค้นหา...';
 
-        navigator.geolocation.getCurrentPosition(async (position) => {
+        navigator.geolocation.getCurrentPosition((position) => {
             const userLat = position.coords.latitude;
             const userLng = position.coords.longitude;
 
-            try {
-                // 1. นำพิกัดผู้ใช้มาไว้หน้าสุด แล้วตามด้วยพิกัดสถานที่ทั้งหมด (คั่นด้วย ;)
-                const coordsString = `${userLng},${userLat};` + attractions.map(item => `${item.lng},${item.lat}`).join(';');
-                
-                // 2. ยิง API แบบ Table ไป "ครั้งเดียว" (sources=0 คือคำนวณจากจุดแรกไปยังจุดอื่นๆ ทั้งหมด)
-                const response = await fetch(`https://router.project-osrm.org/table/v1/driving/${coordsString}?sources=0`);
-                const data = await response.json();
+            let placesWithDistance = attractions.map(item => {
+                const distance = calculateDistance(userLat, userLng, item.lat, item.lng);
+                return { ...item, distance: distance };
+            });
 
-                // 3. นำระยะทางที่ได้มาจับคู่กับการ์ดสถานที่
-                let placesWithRouteDistance = attractions.map((item, index) => {
-                    let distanceVal = 0;
-                    if (data.code === 'Ok' && data.distances && data.distances[0]) {
-                        // index + 1 เพราะข้อมูลตำแหน่งที่ 0 คือระยะทางจากผู้ใช้ไปหาผู้ใช้เอง (ซึ่งคือ 0)
-                        distanceVal = data.distances[0][index + 1] / 1000; // แปลงเมตรเป็นกิโลเมตร
-                    } else {
-                        // Fallback: ถ้าระบบถนนมีปัญหา ให้ใช้ระยะทางกระจัด (เส้นตรง) แทน
-                        distanceVal = calculateDistance(userLat, userLng, item.lat, item.lng);
-                    }
-                    return { ...item, distance: distanceVal };
-                });
-
-                // 4. เรียงลำดับใกล้ไปไกล และแสดงผล
-                placesWithRouteDistance.sort((a, b) => a.distance - b.distance);
-                renderCards(placesWithRouteDistance);
-                
-                DOM.nearbyBtn.innerHTML = originalText;
-                document.getElementById('attractions').scrollIntoView({behavior: 'smooth'});
-
-            } catch (error) {
-                // กรณีเน็ตหลุด หรือ API ล่ม จะสลับมาใช้คำนวณระยะทางเส้นตรงทันที (แอปจะได้ไม่ค้าง)
-                let fallbackPlaces = attractions.map(item => ({
-                    ...item,
-                    distance: calculateDistance(userLat, userLng, item.lat, item.lng)
-                })).sort((a, b) => a.distance - b.distance);
-                
-                renderCards(fallbackPlaces);
-                DOM.nearbyBtn.innerHTML = originalText;
-                document.getElementById('attractions').scrollIntoView({behavior: 'smooth'});
-            }
+            placesWithDistance.sort((a, b) => a.distance - b.distance);
+            renderCards(placesWithDistance);
+            
+            DOM.nearbyBtn.innerHTML = originalText;
+            document.getElementById('attractions').scrollIntoView({behavior: 'smooth'});
 
         }, (error) => {
+            alert("ไม่สามารถดึงตำแหน่งได้ กรุณาอนุญาตการเข้าถึงตำแหน่งที่ตั้ง (Location) ก่อนครับ");
             DOM.nearbyBtn.innerHTML = originalText;
-            alert("ไม่สามารถดึงตำแหน่งได้ กรุณาเปิด GPS และอนุญาตการเข้าถึงตำแหน่งครับ");
-        }, { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }); // ลด timeout เหลือ 10 วินาที
+        });
     };
+
     // ==========================================
     // 4. Theme & Mobile Menu
     // ==========================================
@@ -470,5 +441,3 @@ document.addEventListener('DOMContentLoaded', () => {
     initScrollEffects();
     renderCards(attractions);
 });
-
-
