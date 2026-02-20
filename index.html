@@ -32,10 +32,10 @@
     <style>
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-        ::-webkit-scrollbar { width: 10px; }
+        ::-webkit-scrollbar { width: 10 px; }
         ::-webkit-scrollbar-track { background: #f1f1f1; }
         .dark ::-webkit-scrollbar-track { background: #2d2d2d; }
-        ::-webkit-scrollbar-thumb { background: #0077b6; border-radius: 5px; }
+        ::-webkit-scrollbar-thumb { background: #0077b6; border-radius: 5 px; }
         ::-webkit-scrollbar-thumb:hover { background: #00b4d8; }
         .opacity-0-start { opacity: 0; }
     </style>
@@ -71,10 +71,14 @@
         </div>
     </nav>
 
-    <header id="home" class="h-screen relative flex items-center justify-center text-center text-white overflow-hidden group">
-        <video autoplay loop muted playsinline class="absolute z-0 w-auto min-w-full min-h-full max-w-none object-cover transition duration-1000 group-hover:scale-105">
+    <header id="home" class="h-screen relative flex items-center justify-center text-center text-white overflow-hidden group bg-gray-900">
+        
+        <video autoplay loop muted playsinline 
+               poster="https://images.unsplash.com/photo-1528181304800-259b08848526?auto=format&fit=crop&w=1600"
+               class="absolute z-0 w-auto min-w-full min-h-full max-w-none object-cover transition duration-1000 group-hover:scale-105">
             <source src="https://cdn.pixabay.com/video/2020/05/25/40141-424838637_large.mp4" type="video/mp4">
         </video>
+        
         <div class="absolute inset-0 z-0 bg-black/40 transition duration-500 group-hover:bg-black/30"></div>
         
         <div class="relative z-10 px-4 transition-all duration-100 ease-out" id="hero-text">
@@ -175,3 +179,4 @@
     <script src="script.js"></script>
 </body>
 </html>
+
