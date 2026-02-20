@@ -1,6 +1,6 @@
 document.addEventListener('DOMContentLoaded', () => {
     // ==========================================
-    // 1. DOM Elements (ตัวแปรเก็บองค์ประกอบหน้าเว็บ)
+    // 1. DOM Elements
     // ==========================================
     const DOM = {
         cardGrid: document.getElementById('cardGrid'),
@@ -21,10 +21,11 @@ document.addEventListener('DOMContentLoaded', () => {
         dropdownList: document.getElementById('dropdownList'),
         dropdownArrow: document.getElementById('dropdownArrow'),
         selectedText: document.getElementById('selectedText'),
+        nearbyBtn: document.getElementById('nearbyBtn')
     };
 
     // ==========================================
-    // 2. State Variables (ตัวแปรเก็บสถานะการทำงาน)
+    // 2. State Variables
     // ==========================================
     let currentImageIndex = 0;
     let currentItemImages = [];
@@ -33,7 +34,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let isScrolling = false;
 
     // ==========================================
-    // 3. Utilities (ฟังก์ชันช่วยเหลือ)
+    // 3. Utilities & Location
     // ==========================================
     const debounce = (func, wait) => {
         let timeout;
@@ -46,6 +47,47 @@ document.addEventListener('DOMContentLoaded', () => {
     const getCategoryName = (cat) => {
         const names = { 'nature': 'ธรรมชาติ', 'temple': 'วัด/ศาสนา', 'culture': 'วัฒนธรรม', 'city': 'ในเมือง' };
         return names[cat] || cat;
+    };
+
+    const calculateDistance = (lat1, lon1, lat2, lon2) => {
+        const R = 6371; 
+        const dLat = (lat2 - lat1) * Math.PI / 180;
+        const dLon = (lon2 - lon1) * Math.PI / 180;
+        const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                  Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                  Math.sin(dLon/2) * Math.sin(dLon/2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+        return R * c;
+    };
+
+    const findNearbyPlaces = () => {
+        if (!navigator.geolocation) {
+            alert("เบราว์เซอร์ของคุณไม่รองรับการระบุตำแหน่งครับ");
+            return;
+        }
+
+        const originalText = DOM.nearbyBtn.innerHTML;
+        DOM.nearbyBtn.innerHTML = '⏳ กำลังค้นหา...';
+
+        navigator.geolocation.getCurrentPosition((position) => {
+            const userLat = position.coords.latitude;
+            const userLng = position.coords.longitude;
+
+            let placesWithDistance = attractions.map(item => {
+                const distance = calculateDistance(userLat, userLng, item.lat, item.lng);
+                return { ...item, distance: distance };
+            });
+
+            placesWithDistance.sort((a, b) => a.distance - b.distance);
+            renderCards(placesWithDistance);
+            
+            DOM.nearbyBtn.innerHTML = originalText;
+            document.getElementById('attractions').scrollIntoView({behavior: 'smooth'});
+
+        }, (error) => {
+            alert("ไม่สามารถดึงตำแหน่งได้ กรุณาอนุญาตการเข้าถึงตำแหน่งที่ตั้ง (Location) ก่อนครับ");
+            DOM.nearbyBtn.innerHTML = originalText;
+        });
     };
 
     // ==========================================
@@ -79,11 +121,15 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // ==========================================
-    // 5. Cards Rendering (ระบบสร้างการ์ดสถานที่)
+    // 5. Cards Rendering
     // ==========================================
     const createCardHTML = (item) => {
         const coverImage = item.images && item.images.length > 0 ? item.images[0] : 'https://placehold.co/600x400';
         const fallbackLink = `https://placehold.co/600x400?text=${encodeURIComponent(item.name)}`;
+        
+        const distanceBadge = item.distance !== undefined 
+            ? `<span class="absolute top-4 left-4 px-3 py-1 text-xs font-bold bg-blue-600/90 text-white rounded-full shadow-sm backdrop-blur-md z-10">📍 ห่าง ${item.distance.toFixed(1)} กม.</span>` 
+            : '';
         
         return `
             <div class="h-64 overflow-hidden relative">
@@ -91,6 +137,7 @@ document.addEventListener('DOMContentLoaded', () => {
                      class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 group-hover:rotate-1"
                      onerror="this.onerror=null; this.src='${fallbackLink}';">
                 <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent opacity-60 group-hover:opacity-90 transition-opacity duration-300"></div>
+                ${distanceBadge}
                 <span class="absolute top-4 right-4 px-3 py-1 text-xs font-bold bg-white/90 dark:bg-darkCard/90 text-primary rounded-full shadow-sm backdrop-blur-md">
                     #${getCategoryName(item.category)}
                 </span>
@@ -134,7 +181,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // ==========================================
-    // 6. Search & Filter & Dropdown
+    // 6. Search & Filter
     // ==========================================
     const handleFilter = () => {
         const searchText = DOM.searchInput.value.toLowerCase();
@@ -326,7 +373,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const stopSlideshow = () => clearInterval(slideshowInterval);
 
     // ==========================================
-    // 9. Global Functions (สำหรับใช้ผ่าน onclick ใน HTML)
+    // 9. Global Functions
     // ==========================================
     window.updateGalleryDisplay = () => {
         const mainImage = document.getElementById('modalMainImage');
@@ -380,6 +427,11 @@ document.addEventListener('DOMContentLoaded', () => {
         const randomIndex = Math.floor(Math.random() * attractions.length);
         openModal(attractions[randomIndex].id);
     };
+
+    // Binding nearby button
+    if(DOM.nearbyBtn) {
+        DOM.nearbyBtn.addEventListener('click', findNearbyPlaces);
+    }
 
     // ==========================================
     // 10. Initialization
