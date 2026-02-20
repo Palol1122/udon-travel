@@ -4,10 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>เที่ยวอุดรธานี - Udon Thani Travel Guide</title>
-    <link rel="icon" type="image/png" href="favicon.png"> 
+    
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0077b6">
+    <link rel="apple-touch-icon" href="icon-512.png">
+    
     <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;700&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
     <script>
         tailwind.config = {
             darkMode: 'class',
@@ -32,10 +37,10 @@
     <style>
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-        ::-webkit-scrollbar { width: 10 px; }
+        ::-webkit-scrollbar { width: 10px; }
         ::-webkit-scrollbar-track { background: #f1f1f1; }
         .dark ::-webkit-scrollbar-track { background: #2d2d2d; }
-        ::-webkit-scrollbar-thumb { background: #0077b6; border-radius: 5 px; }
+        ::-webkit-scrollbar-thumb { background: #0077b6; border-radius: 5px; }
         ::-webkit-scrollbar-thumb:hover { background: #00b4d8; }
         .opacity-0-start { opacity: 0; }
     </style>
@@ -72,13 +77,9 @@
     </nav>
 
     <header id="home" class="h-screen relative flex items-center justify-center text-center text-white overflow-hidden group bg-gray-900">
-        
-        <video autoplay loop muted playsinline 
-               poster="https://images.unsplash.com/photo-1528181304800-259b08848526?auto=format&fit=crop&w=1600"
-               class="absolute z-0 w-auto min-w-full min-h-full max-w-none object-cover transition duration-1000 group-hover:scale-105">
+        <video autoplay loop muted playsinline poster="https://images.unsplash.com/photo-1528181304800-259b08848526?auto=format&fit=crop&w=1600" class="absolute z-0 w-auto min-w-full min-h-full max-w-none object-cover transition duration-1000 group-hover:scale-105">
             <source src="https://cdn.pixabay.com/video/2020/05/25/40141-424838637_large.mp4" type="video/mp4">
         </video>
-        
         <div class="absolute inset-0 z-0 bg-black/40 transition duration-500 group-hover:bg-black/30"></div>
         
         <div class="relative z-10 px-4 transition-all duration-100 ease-out" id="hero-text">
@@ -146,19 +147,19 @@
                 </div>
                 
                 <div class="flex gap-4">
-                    <a href="https://www.facebook.com/share/r/1GA6joGSP3/" class="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center text-gray-600 dark:text-gray-300 hover:bg-[#1877F2] hover:text-white transition-all transform hover:scale-110">
+                    <a href="#" class="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center text-gray-600 dark:text-gray-300 hover:bg-[#1877F2] hover:text-white transition-all transform hover:scale-110">
                         <i class="fab fa-facebook-f text-lg"></i>
                     </a>
-                    <a href="https://www.instagram.com/p/CGh4a0iASGS/?igsh=MW00eGhqc2Z3YXMybg==" class="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center text-gray-600 dark:text-gray-300 hover:bg-gradient-to-tr hover:from-[#f9ce34] hover:via-[#ee2a7b] hover:to-[#6228d7] hover:text-white transition-all transform hover:scale-110">
+                    <a href="#" class="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center text-gray-600 dark:text-gray-300 hover:bg-gradient-to-tr hover:from-[#f9ce34] hover:via-[#ee2a7b] hover:to-[#6228d7] hover:text-white transition-all transform hover:scale-110">
                         <i class="fab fa-instagram text-lg"></i>
                     </a>
-                    <a href="https://youtu.be/dQw4w9WgXcQ?si=_Q4AbsUrgwEIHSWb" class="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center text-gray-600 dark:text-gray-300 hover:bg-[#FF0000] hover:text-white transition-all transform hover:scale-110">
+                    <a href="#" class="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center text-gray-600 dark:text-gray-300 hover:bg-[#FF0000] hover:text-white transition-all transform hover:scale-110">
                         <i class="fa-brands fa-youtube text-lg"></i>
                     </a>
                 </div>
             </div>
             <div class="border-t border-gray-100 dark:border-gray-800 pt-8 text-center">
-                <p class="text-gray-500 text-sm">© 2025 Udon Thani Travel Guide. Developed with 💙 by You.</p>
+                <p class="text-gray-500 text-sm">© 2026 Udon Thani Travel Guide. Developed with 💙 by You.</p>
             </div>
         </div>
     </footer>
@@ -177,7 +178,15 @@
 
     <script src="data.js"></script>
     <script src="script.js"></script>
+    
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('./sw.js')
+            .then(reg => console.log('Service Worker ทำงานเรียบร้อย!'))
+            .catch(err => console.log('Service Worker ล้มเหลว:', err));
+        });
+      }
+    </script>
 </body>
 </html>
-
-
